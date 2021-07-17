@@ -1,0 +1,142 @@
+html, body {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0 auto;
+    --fgHover: rgb(32, 32, 32, 0.1);
+    --fg: #222;
+    --bg: #eeecec;
+    font-family: 'Fira Sans', sans-serif;
+    font-weight: 300;
+    background: var(--bg);
+    color: var(--fg);
+}
+
+body.dark {
+    --fg: #fafafa;
+    --fgHover: rgb(250,250,250, 0.1);
+    --bg: #222;
+}
+
+.content {
+    color: var(--bg);
+    flex-grow: 1;
+    overflow: auto;
+    margin: 0;
+    padding: 0;
+}
+
+main {
+    max-width: 800px;
+    height: 100vh;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    width: calc(100% - 2em);
+}
+
+@media (max-width:640px)  { 
+    /* smartphones, Android phones, landscape iPhone 
+    vh is handled badly on phone, so change height of main
+    */ 
+    main {
+        height: 85vh !important;
+    }
+}
+
+.littlePadding {
+    padding-top: 0.5em;
+    padding-bottom: 2em;
+}
+
+footer {
+    width: 100%;
+    flex-shrink: 0;
+    padding: 8px 2px 8px 2px;
+    text-align: center; 
+    font-size: 1em;
+    color: var(--fg);
+}
+
+
+.textbox {
+    width: 100%;
+    position: relative;
+}
+
+a {
+    text-decoration: underline;
+    color: var(--fg);
+}
+
+a:hover{
+    text-decoration: underline;
+}
+
+textarea, .p-heights {
+    box-sizing: border-box;
+    border: none;
+    margin: 10px 0 10px 0;
+    border-radius: 5px;
+    width: 100%;
+    color: var(--fg);
+    font-size: 1em;
+    min-height: 2em;
+    line-height: 1.5em;
+    font-family: 'Inconsolata', monospace;
+    background: transparent;
+    outline: black;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+textarea {
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    overflow: hidden;
+    resize: none;
+    position: absolute;
+}
+
+.p-heights {
+    visibility: hidden;
+}
+
+
+button:hover {
+    background: var(--fgHover);
+}
+
+button {
+    width: fit-content;
+    flex-shrink: 0;
+    align-self: center;
+    background: var(--bg);
+    margin-bottom: 20px;
+    color: var(--fg);
+    border-radius: 6px;
+    border: none;
+    font-size: 2em;
+}
+
+.icon::after {
+    position: absolute;
+    pointer-events: none;
+    white-space: nowrap;
+    content: 'Add new page';
+    padding: 5px;
+    background: var(--fgHover);
+    border-radius: 6px;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
+    opacity: 0;
+    transform: translate(-63%, 40px);
+    transition: opacity .2s, transform .2s;
+    transition-delay: 0s;
+}
+
+.icon:hover::after {
+    transition-delay: 0.5s;
+    opacity: 1 !important;
+}

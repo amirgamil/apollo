@@ -1,9 +1,10 @@
 # Apollo 💎
 ### The first search engine where you choose what content to put in
+### A personal search engine for a footprint you create!
 
 Apollo is a different type of search engine. Traditional search engines (like Google) are great for **discovery** when you're trying to find the answer to a question, but you don't know what you're looking for.
 
-However, they're very poor at **recall** when you've seen something before on the internet somewhere but can't remember where. Trying to find it becomes a nightmare - I've wasted many an hour combing through Google and my search history to look up a good article, blog post, or just something I've seen before.
+However, they're very poor at **recall and synthesis** when you've seen something before on the internet somewhere but can't remember where. Trying to find it becomes a nightmare - how can you synthezize the great material on the internet when you forgot where it even was? I've wasted many an hour combing through Google and my search history to look up a good article, blog post, or just something I've seen before.
 
 Even with built in systems to store some of my favorite [articles](https://zeus.amirbolous.com/articles), [podcasts](https://zeus.amirbolous.com/podcasts), and other stuff, I forget things **all the time**.
 
@@ -14,6 +15,35 @@ Apollo is a search engine to digest **your digital footprint**. What this means 
 
 Apollo is not necessarly built for raw discovery (although it certainly matches rediscovery), it's built for knowledge compression and transformation - that is looking up things that you've previously deemed to be cool
 
+## High level tasks
+1. Full-text search algorithm
+2. Data sources, how to ingest data from different sources? Just a text box where you post link, text, (and optional tags?)
+
+## Data Schema
+Two schemas we use, one to first parse the data into some encoded format. 
+This does not get stored, it's purely an intermediate before we transform it into a record for our inverted index.
+Why is this important?
+- Because since any data gets parsed into this standarized format, you can link **any data source** you want, if you build your own tool, if you store a lot of data in some existing one, you don't have to manually add everything. *Just write small script that pulls the data*? (or should this provided in the search engine)
+```go
+type Data struct {
+    title string //a title of the record, self-explanatory
+    link string //links to the source of a record, e.g. a blog post, website, podcast etc.
+    content string //actual content of the record, must be text data
+    tags []string //list of potential high-level document tags you want to add that will be
+                  //indexed in addition to the raw data contained 
+}
+```
+
+```go
+type Record struct {
+    
+}
+```
+
+Store indexes as such. We avoid storing the raw data, favoring to store and recompute the inverted index (like the index at the back of a book with a list of words that references different pages)
+
+**Notes** 
+- Inverted index generated at build time, like [monocole](https://github.com/thesephist/monocle)
 
 ### Workflows
 1. If it's an article, need to paste the body of the article
@@ -21,3 +51,4 @@ Apollo is not necessarly built for raw discovery (although it certainly matches 
 
 
 ## Document storage
+TODO
