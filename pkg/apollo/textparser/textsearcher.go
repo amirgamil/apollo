@@ -2,6 +2,8 @@ package textparser
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"os"
 )
 
@@ -17,15 +19,15 @@ type Recrod struct {
 //represents raw data that we will parse objects into before they have been transformed into records
 //and stored in our database
 type Data struct {
-	Title string `json:"title"`
-	Link string  `json:"link"`
-	Content string `json:"content"`
-	Tags []string `json:"tags"`
+	Title   string   `json:"title"`
+	Link    string   `json:"link"`
+	Content string   `json:"content"`
+	Tags    []string `json:"tags"`
 }
 
-var data Data[]
-const dbPath = "data/db.json"
+var data []Data
 
+const dbPath = "data/db.json"
 
 //called at the global start
 func ensureDataExists() {
@@ -37,12 +39,11 @@ func ensureDataExists() {
 			return
 		}
 		f.Close()
-		data = make(data, 0);
+		data = make([]Data, 0)
 	} else {
 		defer jsonFile.Close()
 	}
 }
-
 
 func loadDataFromJSON() {
 	ensureDataExists()
@@ -55,7 +56,7 @@ func loadDataFromJSON() {
 	json.NewDecoder(file).Decode(&data)
 }
 
-//this is the method that will intermittently take the raw data from the current JSON file that needs to be converted 
+//this is the method that will intermittently take the raw data from the current JSON file that needs to be converted
 //and "flush it" or put it into the inverted index
 //this is the "highest level" method which gets called as part of this script
 func flushNewDataIntoInvertedIndex() {
@@ -65,8 +66,9 @@ func flushNewDataIntoInvertedIndex() {
 		//need to get a unique ID for the data
 
 		//need to tokenize
-
 		//need to filter and remove stop words
+
+		//need to stem
 
 		//count frequency and create `Record`
 
@@ -75,10 +77,7 @@ func flushNewDataIntoInvertedIndex() {
 	}
 }
 
-
 func main() {
 	ensureDataExists()
 	//for some regular time interval once a day?, flush the new data that has been written to our JSON f
 }
-
-
