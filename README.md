@@ -48,6 +48,7 @@ Store indexes as such. We avoid storing the raw data, favoring to store and reco
 - Since this is not a commercial product, I will not be running your *version of this* (if you find it useful) on my server. However, althought I designed this, first and foremost for myself, I want other people to be able to use if this is something that's useful.
 - Pipeline:
 Ingest data -> Convert raw data into records, which are stored in the inverted index -> Client uses inverted index (with some text processing shenanagins like stemming and lexing and that stuff) to load results
+- Had the choice between using Go's `gob` package for the database/inverted index and `JSON`. The `gob` package is definitely faster however it's only native in Go so I decided to go with `JSON` to make the data available in the future for potentially any non-Go integrations and be able to switch the infrastructure completely if I want to etc. 
 
 1. Client (search engine) is a static deployment
 2. Backend which converts raw data into records and does all the heavyweight text parsing is written in Go which runs on your local machine (saving both me and you server costs!)

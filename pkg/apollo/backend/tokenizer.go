@@ -1,4 +1,4 @@
-package textparser
+package backend
 
 import (
 	"fmt"
@@ -56,6 +56,12 @@ func splitByWhiteSpace(source string) []string {
 	return tokens
 }
 
+func Analyze(source string) []string {
+	tokens := Tokenize(source)
+	stemmedTokens := stem(tokens)
+	return stemmedTokens
+}
+
 //takes in a source of text and converts into an array of stemmed tokens (filtering out stop words and punctuation)
 //This gets called when ingesting new data and when searching
 //TODO: or is it better to just "generateAllPossibleVarations" of a word on the client side, then wouldn't need to stem on the backend?
@@ -64,9 +70,7 @@ func Tokenize(source string) []string {
 	if len(punctuation) == 0 || len(stopWords) == 0 {
 		initConstants()
 	}
-	tokens := splitByWhiteSpace(source)
-	stemmedTokens := stem(tokens)
-	return stemmedTokens
+	return splitByWhiteSpace(source)
 }
 
 //I use a ported version of the Go snowball algorithm (considered a portman2.0)here. Although I would have preferred to write my own stemmer
