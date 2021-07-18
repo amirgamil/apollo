@@ -43,7 +43,15 @@ type Record struct {
 Store indexes as such. We avoid storing the raw data, favoring to store and recompute the inverted index (like the index at the back of a book with a list of words that references different pages)
 
 **Notes** 
-- Inverted index generated at build time, like [monocole](https://github.com/thesephist/monocle)
+- Inverted index generated at build time, like [monocole](https://github.com/thesephist/monocle), since this means I don't have run it on my server and can save money. 
+- Small script that redeploys the website at intermittent periods, don't have to do it manually
+- Since this is not a commercial product, I will not be running your *version of this* (if you find it useful) on my server. However, althought I designed this, first and foremost for myself, I want other people to be able to use if this is something that's useful.
+- Pipeline:
+Ingest data -> Convert raw data into records, which are stored in the inverted index -> Client uses inverted index (with some text processing shenanagins like stemming and lexing and that stuff) to load results
+
+1. Client (search engine) is a static deployment
+2. Backend which converts raw data into records and does all the heavyweight text parsing is written in Go which runs on your local machine (saving both me and you server costs!)
+3. How do we ingest data? Unsure of this bit
 
 ### Workflows
 1. If it's an article, need to paste the body of the article

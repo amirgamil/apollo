@@ -13,7 +13,9 @@ import (
 //smallest unit of data that we store in the database
 //this will store each "item" in our search engine with all of the necessary information
 //for the interverted index
-type Recrod struct {
+type Record struct {
+	Title string `json:"title"`
+	Link  string `json:"link"`
 }
 
 //represents raw data that we will parse objects into before they have been transformed into records
@@ -56,6 +58,20 @@ func loadDataFromJSON() {
 	json.NewDecoder(file).Decode(&data)
 }
 
+//takes a string of tokens and returns a map of each token to its frequency
+func countFrequencyTokens(tokens []string) map[string]int {
+	frequencyWords := make(map[string]int)
+	for _, token := range tokens {
+		_, isInMap := frequencyWords[token]
+		if isInMap {
+			frequencyWords[token] += 1
+		} else {
+			frequencyWords[token] = 1
+		}
+	}
+	return frequencyWords
+}
+
 //this is the method that will intermittently take the raw data from the current JSON file that needs to be converted
 //and "flush it" or put it into the inverted index
 //this is the "highest level" method which gets called as part of this script
@@ -67,12 +83,15 @@ func flushNewDataIntoInvertedIndex() {
 
 		//need to tokenize
 		//need to filter and remove stop words
-
 		//need to stem
+		tokens := Tokenize(data[i].Content)
 
 		//count frequency and create `Record`
+		frequencyOfTokens = countFrequencyTokens(tokens)
 
 		//store record in our inverted index
+		record := Record{}
+		//TODO: change to return results from sorted of relevancy, + integrate tag words and assign high probability mass to their reference
 
 	}
 }
@@ -80,4 +99,5 @@ func flushNewDataIntoInvertedIndex() {
 func main() {
 	ensureDataExists()
 	//for some regular time interval once a day?, flush the new data that has been written to our JSON f
+	flushNewDataIntoInvertedIndex()
 }

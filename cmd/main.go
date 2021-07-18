@@ -6,4 +6,5 @@ import (
 
 func main() {
 	apollo.Start()
+	//server and the pipeline should run on concurrent threads
 }

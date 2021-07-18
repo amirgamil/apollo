@@ -27,6 +27,7 @@ func TestTokenizer(t *testing.T) {
 		t.Errorf(fmt.Sprintf("Uh oh, test 1 expected %s but got %s", expected, result))
 	}
 
+	//test punctuation, capital letters
 	moreComplex := "help me! (I'm feeling luCKy) today"
 	expected = []string{"help", "'m", "feeling", "lucky", "today"}
 	result = textparser.Tokenize(moreComplex)
@@ -35,6 +36,7 @@ func TestTokenizer(t *testing.T) {
 		t.Errorf(fmt.Sprintf("Uh oh, test 2 expected %s but got %s", expected, result))
 	}
 
+	//test quotes
 	moreComplex = "but I \"don't know What it's going to be like\""
 	expected = []string{"know", "'s", "going", "like"}
 	result = textparser.Tokenize(moreComplex)
@@ -51,4 +53,20 @@ func TestTokenizer(t *testing.T) {
 	if !equal {
 		t.Errorf(fmt.Sprintf("Uh oh, test 3 expected %s but got %s", expected, result))
 	}
+
+	result = textparser.Tokenize("")
+	expected = make([]string, 0)
+	equal = compareArrays(result, expected)
+	if !equal {
+		t.Errorf(fmt.Sprintf("Uh oh, test 4 expected %s but got %s", expected, result))
+	}
+
+	//same word different formations
+	result = textparser.Tokenize("Hello something SOMETHING someTHiNg")
+	expected = []string{"hello", "something", "something", "something"}
+	equal = compareArrays(result, expected)
+	if !equal {
+		t.Errorf(fmt.Sprintf("Uh oh, test 4 expected %s but got %s", expected, result))
+	}
+
 }

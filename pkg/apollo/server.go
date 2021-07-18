@@ -1,4 +1,4 @@
-package lists
+package apollo
 
 import (
 	"io"
