@@ -1,12 +1,15 @@
 package apollo
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/amirgamil/apollo/pkg/apollo/backend"
 	"github.com/gorilla/mux"
 )
 
@@ -27,18 +30,32 @@ func index(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, indexFile)
 }
 
+func search(w http.ResponseWriter, r *http.Request) {
+	searchQuery := r.FormValue("q")
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Println(searchQuery)
+	results := backend.Search(searchQuery, "AND")
+	if results != nil {
+		fmt.Println("results : ", results)
+		json.NewEncoder(w).Encode(results)
+	} else {
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
 func Start() {
 	r := mux.NewRouter()
 
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         "127.0.0.1:8994",
+		Addr:         "127.0.0.1:8993",
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,
 	}
 
+	//will need to some kind of API call to ingest data
+	r.Methods("POST").Path("/search").HandlerFunc(search)
 	r.HandleFunc("/", index)
-	// r.Methods("GET").Path("/data").HandlerFunc()
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	log.Printf("Server listening on %s\n", srv.Addr)
 	log.Fatal(srv.ListenAndServe())

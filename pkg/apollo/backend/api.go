@@ -23,7 +23,7 @@ type Record struct {
 	//potential link to the source if applicable
 	Link string `json:"link"`
 	//map of tokens to their frequency
-	tokenFrequency map[string]int //TODO - is this exported?
+	TokenFrequency map[string]int `json:"tokenFrequency"`
 }
 
 //represents raw data that we will parse objects into before they have been transformed into records
@@ -83,6 +83,9 @@ func InitializeFilesAndData() {
 	ensureDataExists(dbPath)
 	ensureDataExists(invertedIndexPath)
 	ensureDataExists(recordsPath)
+	data = make([]Data, 0)
+	globalInvertedIndex = make(map[string][]string)
+	globalRecordList = make(map[string]Record)
 
 }
 
@@ -146,6 +149,16 @@ func writeIndexToDisk() {
 	jsoniter.NewEncoder(jsonFile).Encode(globalInvertedIndex)
 }
 
+//helper method which writes the current the record list to disk
+func writeRecordListToDisk() {
+	jsonFile, err := os.OpenFile(recordsPath, os.O_WRONLY|os.O_CREATE, 0755)
+	if err != nil {
+		fmt.Println("Error trying to write the new inverted index to disk")
+	}
+	defer jsonFile.Close()
+	jsoniter.NewEncoder(jsonFile).Encode(globalRecordList)
+}
+
 //helper method which empties the JSON file containing the previously new data to add our search engine's data
 func emptyTempDatabase() {
 	//call os.Create which will create a new empty JSON file, don't want to keep storing the old data since we don't need it
@@ -158,6 +171,7 @@ func emptyTempDatabase() {
 func FlushNewDataIntoInvertedIndex() {
 	loadNewData()
 	loadInvertedIndex()
+	loadRecordsList()
 	//for now, assume we have the entire content - later build a web crawler that gets the content
 	for i := 0; i < len(data); i++ {
 		currData := data[i]
@@ -184,7 +198,7 @@ func FlushNewDataIntoInvertedIndex() {
 		}
 
 		//store record in our tokens list
-		record := Record{ID: uniqueID, Title: currData.Title, Link: currData.Link, tokenFrequency: frequencyOfTokens}
+		record := Record{ID: uniqueID, Title: currData.Title, Link: currData.Link, TokenFrequency: frequencyOfTokens}
 		globalRecordList[uniqueID] = record
 
 		//loop through final frequencyOfTokens and add it to our inverted index database
@@ -198,9 +212,11 @@ func FlushNewDataIntoInvertedIndex() {
 		}
 
 	}
-	//write data to disk in inverted index JSON file
+	//write data to disk in inverted index and record JSON file
 	writeIndexToDisk()
+	writeRecordListToDisk()
 
 	//empty the database file since we have flushed into the index and persisted to disk
-	emptyTempDatabase()
+	//comment out while we test stuff
+	// emptyTempDatabase()
 }

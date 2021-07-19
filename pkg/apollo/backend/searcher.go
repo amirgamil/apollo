@@ -30,7 +30,7 @@ func Search(query string, searchType string) []Record {
 		for recordID, _ := range tempRecrods {
 			record := globalRecordList[recordID]
 			for i := 1; i < len(queries); i++ {
-				_, tokenInRecord := record.tokenFrequency[queries[i]]
+				_, tokenInRecord := record.TokenFrequency[queries[i]]
 				if !tokenInRecord {
 					//token from our intersection does not exist in this record, so remove it, don't need to keep checking
 					delete(tempRecrods, recordID)
@@ -83,7 +83,7 @@ func rank(results map[string]bool, queries []string) []Record {
 		score := float64(0)
 		for _, token := range queries {
 			idfVal := idf(token)
-			score += idfVal * float64(record.tokenFrequency[token])
+			score += idfVal * float64(record.TokenFrequency[token])
 		}
 		unsortedResults = append(unsortedResults, recordRank{record: record, score: score})
 	}

@@ -72,7 +72,7 @@ a:hover{
     text-decoration: underline;
 }
 
-textarea, .p-heights {
+textarea, .p-heights, input {
     box-sizing: border-box;
     border: none;
     margin: 10px 0 10px 0;
@@ -83,7 +83,7 @@ textarea, .p-heights {
     min-height: 2em;
     line-height: 1.5em;
     font-family: 'Inconsolata', monospace;
-    background: transparent;
+    background: white;
     outline: black;
     word-wrap: break-word;
     white-space: pre-wrap;
@@ -140,3 +140,15 @@ button {
     transition-delay: 0.5s;
     opacity: 1 !important;
 }
+
+
+.engine {
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+
+
