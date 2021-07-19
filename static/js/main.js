@@ -19,7 +19,6 @@ class SearchResults extends CollectionStoreOf(SearchData) {
                    }
                }).then(result => {
                     if (result) {
-                        console.log("hello?", result);
                         this.setStore(result.map(element => new SearchData(element)));
                     } else {
                         this.setStore([]);

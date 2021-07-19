@@ -6,6 +6,8 @@ import (
 	"sort"
 )
 
+//TODO: should search titles too (and put high probability mass on those tokens)
+
 //given a query string a search type (AND / OR ) returns a list of matches ordered by relevance
 func Search(query string, searchType string) []Record {
 	//1. Gets results of a query
@@ -100,6 +102,7 @@ func rank(results map[string]bool, queries []string) []Record {
 	//put sorted records into needed format and return
 	for _, val := range unsortedResults {
 		rankedResults[i] = val.record
+		i += 1
 	}
 	return rankedResults
 }
