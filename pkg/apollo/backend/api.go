@@ -42,18 +42,21 @@ type Data struct {
 var data []Data
 
 //maps tokens to an array of pointers to records
-//we use pointers here for memory conservation, we define the Record one, then should be able to store them
-//in different places, but them all point to the same memory location
-var globalInvertedIndex map[string][]*Record
+//maps strings or tokens to array of record ids
+var globalInvertedIndex map[string][]string
 
 //global list of every single record
-var globalRecordList []*Record
+var globalRecordList map[string]Record
 
 //database of all NEW data that has been accumalated that needs to be flushed into the inverted index
 const dbPath = "./data/db.json"
 
 //database of inverted index for ALL of the data
+//maps strings (i.e tokens) to string ids
 const invertedIndexPath = "./data/index.json"
+
+//database of all of records
+const recordsPath = "./data/records.json"
 
 func createFile(path string) {
 	f, errCreating := os.Create(path)
@@ -79,6 +82,7 @@ func ensureDataExists(path string) {
 func InitializeFilesAndData() {
 	ensureDataExists(dbPath)
 	ensureDataExists(invertedIndexPath)
+	ensureDataExists(recordsPath)
 
 }
 
@@ -95,7 +99,18 @@ func loadInvertedIndex() {
 	jsoniter.NewDecoder(jsonFile).Decode(&globalInvertedIndex)
 }
 
-func loadDataFromJSON() {
+func loadRecordsList() {
+	jsonFile, err := os.Open(recordsPath)
+	if err != nil {
+		fmt.Println("Error, could not load the inverted index")
+		return
+	}
+	defer jsonFile.Close()
+	jsoniter.NewDecoder(jsonFile).Decode(&globalRecordList)
+}
+
+//loads new data that needs to be flushed into our records and inverted index
+func loadNewData() {
 	data = make([]Data, 0)
 	jsonFile, err := os.Open(dbPath)
 	defer jsonFile.Close()
@@ -141,12 +156,12 @@ func emptyTempDatabase() {
 //and "flush it" or put it into the inverted index
 //this is the "highest level" method which gets called as part of this script
 func FlushNewDataIntoInvertedIndex() {
-	loadDataFromJSON()
+	loadNewData()
 	loadInvertedIndex()
 	//for now, assume we have the entire content - later build a web crawler that gets the content
 	for i := 0; i < len(data); i++ {
 		currData := data[i]
-		//need to get a unique ID for the data - use the length of the record list
+		//need to get a unique ID for the data - use the number of records we have so far (i.e. length of the record list)
 		uniqueID := fmt.Sprint(len(globalRecordList))
 		//tokenize, stem, and filter
 		tokens := Analyze(currData.Content)
@@ -170,15 +185,15 @@ func FlushNewDataIntoInvertedIndex() {
 
 		//store record in our tokens list
 		record := Record{ID: uniqueID, Title: currData.Title, Link: currData.Link, tokenFrequency: frequencyOfTokens}
-		globalRecordList = append(globalRecordList, &record)
+		globalRecordList[uniqueID] = record
 
 		//loop through final frequencyOfTokens and add it to our inverted index database
 		for key, _ := range frequencyOfTokens {
 			_, keyInInvertedIndex := globalInvertedIndex[key]
 			if keyInInvertedIndex {
-				globalInvertedIndex[key] = append(globalInvertedIndex[key], &record)
+				globalInvertedIndex[key] = append(globalInvertedIndex[key], uniqueID)
 			} else {
-				globalInvertedIndex[key] = []*Record{&record}
+				globalInvertedIndex[key] = []string{uniqueID}
 			}
 		}
 

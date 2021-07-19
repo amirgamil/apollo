@@ -6,14 +6,14 @@ import (
 )
 
 //given a query string a search type (AND / OR ) returns a list of matches ordered by relevance
-func Search(query string, searchType string) []*Record {
+func Search(query string, searchType string) []Record {
 	//1. Gets results of a query
 	//keep it in a Go map that acts as a set
-	results := make(map[*Record]bool)
+	results := make(map[string]bool)
 	//2. Apply same analysis as when ingesting data i.e. tokenizing and stemming
 	queries := Analyze(query)
 	if len(queries) == 0 {
-		return make([]*Record, 0)
+		return make([]Record, 0)
 	}
 	//Support for AND / OR (TODO: eventually add NOT)
 	if searchType == "AND" {
@@ -21,34 +21,35 @@ func Search(query string, searchType string) []*Record {
 		//temp set holding records we've matched so far for convenience
 		//avoid quadratic complexity by sequentially removing records which don't accumulate matches as we move
 		//through the queries
-		tempRecrods := make(map[*Record]bool)
+		tempRecrods := make(map[string]bool)
 		//get records for first query
 		recordsFirstQueryMatch := globalInvertedIndex[queries[0]]
-		for _, record := range recordsFirstQueryMatch {
-			tempRecrods[record] = true
+		for _, recordID := range recordsFirstQueryMatch {
+			tempRecrods[recordID] = true
 		}
-		for record, _ := range tempRecrods {
+		for recordID, _ := range tempRecrods {
+			record := globalRecordList[recordID]
 			for i := 1; i < len(queries); i++ {
-				_, tokenInRecord := (*record).tokenFrequency[queries[i]]
+				_, tokenInRecord := record.tokenFrequency[queries[i]]
 				if !tokenInRecord {
 					//token from our intersection does not exist in this record, so remove it, don't need to keep checking
-					delete(tempRecrods, record)
+					delete(tempRecrods, recordID)
 					break
 				}
 			}
 		}
 		//now have all of the records which match all of the queries
-		for record, _ := range tempRecrods {
-			results[record] = true
+		for recordID, _ := range tempRecrods {
+			results[recordID] = true
 		}
 	} else if searchType == "OR" {
 		//3. Get list of relevant records from the invertedIndex
 		for _, query := range queries {
 			recordsWithQuery := globalInvertedIndex[query]
-			for _, record := range recordsWithQuery {
-				_, inMap := results[record]
+			for _, recordID := range recordsWithQuery {
+				_, inMap := results[recordID]
 				if !inMap {
-					results[record] = true
+					results[recordID] = true
 				}
 			}
 		}
@@ -69,15 +70,16 @@ func idf(token string) float64 {
 //document-level statistic that scores how relevant a document (record in our case) matches our query
 //then multiplty by the number of times the token gets mentioned in the token
 //returns an ordered list of records from most to least relevant
-func rank(results map[*Record]bool, queries []string) []*Record {
+func rank(results map[string]bool, queries []string) []Record {
 	type recordRank struct {
-		record *Record
+		record Record
 		score  float64
 	}
 	//defining a fixed-size array is faster and more memory efficieny
-	rankedResults := make([]*Record, len(results))
+	rankedResults := make([]Record, len(results))
 	unsortedResults := make([]recordRank, len(results))
-	for record, _ := range results {
+	for recordID, _ := range results {
+		record := globalRecordList[recordID]
 		score := float64(0)
 		for _, token := range queries {
 			idfVal := idf(token)
