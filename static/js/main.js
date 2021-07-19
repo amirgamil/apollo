@@ -1,9 +1,9 @@
-class Data extends Atom {
+class SearchData extends Atom {
 
 }
 
 
-class SearchResults extends CollectionStoreOf(Data) {
+class SearchResults extends CollectionStoreOf(SearchData) {
     fetch(query) {
         return fetch("/search?q=" + encodeURIComponent(query), 
                 {
@@ -17,9 +17,12 @@ class SearchResults extends CollectionStoreOf(Data) {
                    } else {
                        Promise.reject(response);
                    }
-               }).then(data => {
-                    if (data) {
-                        this.setStore(data.map(element => new Data(element)));
+               }).then(result => {
+                    if (result) {
+                        console.log("hello?", result);
+                        this.setStore(result.map(element => new SearchData(element)));
+                    } else {
+                        this.setStore([]);
                     }
                }).catch(ex => {
                    console.log("Exception occurred trying to fetch the result of a request: ", ex);
@@ -29,16 +32,23 @@ class SearchResults extends CollectionStoreOf(Data) {
 
 class Result extends Component {
     init(data, removeCallBack) {
-        this.removeCallBack = this.removeCallBack.bind(this);
+        this.data = data;
+        this.removeCallBack = this.removeCallBack;
     }
 
-    create() {
-        return html`<h1>sup</h1>`
+    create({title, link, content}) {
+        return html`<div>
+            ${title}
+        </div>`
     }
 }
 
 class SearchResultsList extends ListOf(Result) {
-
+    create() {
+        return html`<div class="colWrapper">
+            ${this.nodes}
+        </div>`;
+    }
 }
 
 

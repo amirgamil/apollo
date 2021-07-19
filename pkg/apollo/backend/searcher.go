@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"fmt"
 	"math"
 	"sort"
 )
@@ -21,25 +22,25 @@ func Search(query string, searchType string) []Record {
 		//temp set holding records we've matched so far for convenience
 		//avoid quadratic complexity by sequentially removing records which don't accumulate matches as we move
 		//through the queries
-		tempRecrods := make(map[string]bool)
+		tempRecords := make(map[string]bool)
 		//get records for first query
 		recordsFirstQueryMatch := globalInvertedIndex[queries[0]]
 		for _, recordID := range recordsFirstQueryMatch {
-			tempRecrods[recordID] = true
+			tempRecords[recordID] = true
 		}
-		for recordID, _ := range tempRecrods {
+		for recordID, _ := range tempRecords {
 			record := globalRecordList[recordID]
 			for i := 1; i < len(queries); i++ {
 				_, tokenInRecord := record.TokenFrequency[queries[i]]
 				if !tokenInRecord {
 					//token from our intersection does not exist in this record, so remove it, don't need to keep checking
-					delete(tempRecrods, recordID)
+					delete(tempRecords, recordID)
 					break
 				}
 			}
 		}
 		//now have all of the records which match all of the queries
-		for recordID, _ := range tempRecrods {
+		for recordID, _ := range tempRecords {
 			results[recordID] = true
 		}
 	} else if searchType == "OR" {
@@ -78,6 +79,7 @@ func rank(results map[string]bool, queries []string) []Record {
 	//defining a fixed-size array is faster and more memory efficieny
 	rankedResults := make([]Record, len(results))
 	unsortedResults := make([]recordRank, len(results))
+	i := 0
 	for recordID, _ := range results {
 		record := globalRecordList[recordID]
 		score := float64(0)
@@ -85,17 +87,19 @@ func rank(results map[string]bool, queries []string) []Record {
 			idfVal := idf(token)
 			score += idfVal * float64(record.TokenFrequency[token])
 		}
-		unsortedResults = append(unsortedResults, recordRank{record: record, score: score})
+		unsortedResults[i] = recordRank{record: record, score: score}
+		i += 1
 	}
-
+	fmt.Println(len(results), unsortedResults)
 	//sort by highest order score to lowest
 	sort.Slice(unsortedResults, func(i, j int) bool {
 		return unsortedResults[i].score > unsortedResults[j].score
 	})
 
+	i = 0
 	//put sorted records into needed format and return
 	for _, val := range unsortedResults {
-		rankedResults = append(rankedResults, val.record)
+		rankedResults[i] = val.record
 	}
 	return rankedResults
 }

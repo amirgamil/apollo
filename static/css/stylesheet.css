@@ -18,7 +18,7 @@ body.dark {
 }
 
 .content {
-    color: var(--bg);
+    color: var(--fg);
     flex-grow: 1;
     overflow: auto;
     margin: 0;

@@ -22,6 +22,8 @@ type Record struct {
 	Title string `json:"title"`
 	//potential link to the source if applicable
 	Link string `json:"link"`
+	//text content to display on results page
+	Content string `json:"content"`
 	//map of tokens to their frequency
 	TokenFrequency map[string]int `json:"tokenFrequency"`
 }
@@ -198,7 +200,7 @@ func FlushNewDataIntoInvertedIndex() {
 		}
 
 		//store record in our tokens list
-		record := Record{ID: uniqueID, Title: currData.Title, Link: currData.Link, TokenFrequency: frequencyOfTokens}
+		record := Record{ID: uniqueID, Title: currData.Title, Link: currData.Link, Content: currData.Content, TokenFrequency: frequencyOfTokens}
 		globalRecordList[uniqueID] = record
 
 		//loop through final frequencyOfTokens and add it to our inverted index database
