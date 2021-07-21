@@ -1,9 +1,9 @@
-class SearchData extends Atom {
+class Data extends Atom {
 
 }
 
 
-class SearchResults extends CollectionStoreOf(SearchData) {
+class SearchResults extends CollectionStoreOf(Data) {
     fetch(query) {
         return fetch("/search?q=" + encodeURIComponent(query), 
                 {
@@ -19,7 +19,7 @@ class SearchResults extends CollectionStoreOf(SearchData) {
                    }
                }).then(result => {
                     if (result) {
-                        this.setStore(result.map(element => new SearchData(element)));
+                        this.setStore(result.map(element => new Data(element)));
                     } else {
                         this.setStore([]);
                     }
@@ -37,7 +37,7 @@ class Result extends Component {
 
     create({title, link, content}) {
         return html`<div>
-            ${title}
+            <a href=${link}>${title}</a>
         </div>`
     }
 }
@@ -52,31 +52,57 @@ class SearchResultsList extends ListOf(Result) {
 
 
 class SearchEngine extends Component {
-    init(router) {
+    init(router, query) {
         this.router = router;
+        this.query = query;
         this.searchInput = "";
         this.searchData = new SearchResults();
         this.searchResultsList = new SearchResultsList(this.searchData);
         this.handleInput = this.handleInput.bind(this);
+        this.loading = false;
+        this.time = ""
+        this.loadSearchResults = this.loadSearchResults.bind(this);
+        this.setSearchInput = this.setSearchInput.bind(this);
+        //if we have a query on initialization, navigate to it directly
+        if (this.query) {
+            this.setSearchInput(this.query);
+            this.loadSearchResults(this.query);
+        }
     }
 
-    handleInput(evt) {
-        this.searchInput = evt.target.value;
-        //get search results
-        //note don't need to call render since this list will re-render once the collection store updates
-        this.searchData.fetch(this.searchInput)
-                        .then()
+    loadSearchResults(value) {
+        const start = new Date().getTime();
+        this.searchData.fetch(value)
+                        .then(() => {
+                            this.loading = false;
+                            this.time = `${new Date().getTime() - start}ms`
+                            this.render();
+                        })
                         .catch(ex => {
                             //if an error occured, page won't render so need to call render to update with error message
                             this.render();
                         }) 
     }
 
+    setSearchInput(value) {
+        this.searchInput = value;
+    }
+
+    handleInput(evt) {
+        this.setSearchInput(evt.target.value);
+        this.router.navigate("/search?q=" + encodeURIComponent(evt.target.value));
+        this.loading = true;
+        this.render();
+        //get search results
+        this.loadSearchResults(this.searchInput);
+    }
+
     create() {
         return html`<div class = "engine">
-            <h1>Search</h1>
+            <h1>Apollo</h1>
             <input oninput=${this.handleInput} value=${this.searchInput} placeholder="Search across your digital footprint"/>
-            ${this.searchResultsList.node}
+            <p class="time">${this.time}</p>
+            ${this.loading ? html`<p>loading...</p>` : this.searchResultsList.node} 
         </div>`
     }
 }
@@ -88,9 +114,68 @@ class DigitalFootPrint extends Component {
         this.data = new Data({title: "", link: "", content: "", tags: ""})
         this.handleInput = this.handleInput.bind(this);
         this.handleTitle = (evt) => this.handleInput("title", evt);
-        this.handleLink = (evt) => this.handleLink("link", evt);
-        this.handleContent = (evt) => this.handleContent("content", evt);
-        this.handleTags = (evt) => this.handleTags("tags", evt);
+        this.handleLink = (evt) => this.handleInput("link", evt);
+        this.handleContent = (evt) => this.handleInput("content", evt);
+        this.handleTags = (evt) => this.handleInput("tags", evt);
+        this.addData = this.addData.bind(this);
+        this.scrapeData = this.scrapeData.bind(this);
+        this.bind(this.data);
+    }
+
+    scrapeData(evt) {
+        fetch("/scrape?q=" + this.data.get("link"), {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+                "Content-Type" : "application/json"
+            },
+        }).then(response => {
+            if (response.ok) {
+                console.log(response);
+                return response.json()
+            } else {
+                Promise.reject(response)
+            }
+        }).then(data => {
+            this.data.update({title: data["title"], content: data["content"]});
+        }).catch(ex => {
+            console.log("Exception trying to fetch the article: ", ex)
+        })
+    }
+
+    getTagArrayFromString(tagString) {
+        //remove whitespace
+        tagString = tagString.replace(/\s/g, "");
+        let tags = tagString.split('#');
+        tags = tags.length > 1 ? tags.slice(1) : [];
+        return tags;
+    }
+
+    addData() {
+        //create array from text tags
+        let tags = this.getTagArrayFromString(this.data.get("tags"));
+        fetch("/addData", {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify({
+                title: this.data.get("title"),
+                link: this.data.get("link"),
+                content: this.data.get("content"),
+                tags: tags
+            })
+        }).then(response => {
+            if (response.ok) {
+                //TODO: change to actually display
+                console.log("success!")
+            } else {
+                Promise.reject(response)
+            }
+        }).catch(ex => {
+            console.log("Error adding to the db: ", ex);
+        })
     }
 
     handleInput(el, evt) {
@@ -98,15 +183,18 @@ class DigitalFootPrint extends Component {
     }
 
     create({title, link, content, tags}) {
-        return html`<div class="footprint">
-            <div class="content">
-                <input oninput=${this.handleTitle} value=${title}/> 
-                <input oninput=${this.handleLink} value=${link}/> 
-                <input oninput=${this.handleTags} value=${tags}/> 
-                <div class = "datacontent">
-                    <textarea oninput=${this.handleContent} class="littlePadding" placeholder="Paste some content" value=${content}></textarea>
-                    <pre class="p-heights littlePadding ${content.endsWith("\n") ? 'endline' : ''}">${content}</pre>
-                </div>
+        return html`<div class="colWrapper">
+            <h1>Add some data</h1>
+            <input oninput=${this.handleTitle} value=${title} placeholder="Title"/> 
+            <input oninput=${this.handleLink} value=${link} placeholder="Link"/> 
+            <input oninput=${this.handleTags} value=${tags} placeholder="#put #tags #here"/> 
+            <div class = "datacontent">
+                <textarea oninput=${this.handleContent} class="littlePadding" placeholder="Paste some content" value=${content}></textarea>
+                <pre class="p-heights littlePadding ${content.endsWith("\n") ? 'endline' : ''}">${content}</pre>
+            </div>
+            <div class="rowWrapper">
+                <button onclick=${this.scrapeData}>Scrape</button> 
+                <button onclick=${this.addData}>Add</button>
             </div>
         </div>`
     }
@@ -115,21 +203,30 @@ class DigitalFootPrint extends Component {
 
 class App extends Component {
     init() {
-        this.engine = new SearchEngine();
         this.router = new Router();
+        this.footprint = new DigitalFootPrint();
+        this.router.on({
+            route: "/search",
+            handler: (route, params) => {
+                this.engine = new SearchEngine(this.router, params["q"]);
+                this.render();
+            }
+        });
+
         this.router.on({
             route: "/",
-            handler: (route) =>{
-                this.route = route;
-                //do some stuff to get the route to render
+            handler: (route) => {
+                this.engine = new SearchEngine(this.router);
+                this.render();
             }
-        })
+        });
     }
 
     create() {
         return html`<main>
             <div class = "content">
                 ${this.engine.node}
+                ${this.footprint.node}
             </div>
             <footer>Built with <a href="https://github.com/amirgamil/poseidon">Poseidon</a> by <a href="https://amirbolous.com/">Amir</a></footer>
         </main>` 

@@ -55,8 +55,24 @@ Ingest data -> Convert raw data into records, which are stored in the inverted i
 3. How do we ingest data? Unsure of this bit
 
 ### Workflows
-1. If it's an article, need to paste the body of the article
-2. If it's a podcast episode, transcribe it with [oTranscribe](https://otranscribe.com/) then put it in
+
+Data comes in many forms and the more varied those forms are, the harder it's to write reliable software to deal with it. If everything I wanted to index was just stuff I wrote, life would be easy. All of my notes would probably live in one place, so I would just have to grab the data from that data source and chill
+
+The problem is I don't take a lot of notes and not everything I want to index is something I'd take notes of.
+
+So what did I do? 
+
+Apollo can't handle all types of data, it's not design to. However in building a search engine to index stuff, there are a couple of things I focused on:
+1. Any data that comes from a specific platform can be integrated. If you want to index all your Twitter data for example,
+this is possible since all of the data can be absorbed in a constant format, converted into the compatible apollo format, and sent off.
+So data sources can be easily integrated, this is by design in case I want to pull in data from personal tools.
+
+2. The harder thing is what about just, what I wil call, "writing on the internet." I read a lot of stuff on the Internet, much of which I'd like to be able to index, without necessarily having to takes notes on everything I read because I'm lazy. The dream would be to just be able to drop a link and have Apollo intelligently try to fetch the content, then I can index it without having to go to the post and copying the content, which would be painful and too slow.
+
+1. If it's writing on the Internet, should be able to post link and autofill pwd
+2. If it's a podcast episode or any YouTube video, download text transcription e.g. [this](https://github.com/moizahmedd/youtube-video-search)
+3. Pull in stuff from readwise?
+
 
 
 ## Document storage

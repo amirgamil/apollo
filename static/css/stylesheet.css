@@ -20,7 +20,7 @@ body.dark {
 .content {
     color: var(--fg);
     flex-grow: 1;
-    overflow: auto;
+    position: relative;
     margin: 0;
     padding: 0;
 }
@@ -55,6 +55,14 @@ footer {
     text-align: center; 
     font-size: 1em;
     color: var(--fg);
+}
+
+.colWrapper {
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 
@@ -110,14 +118,14 @@ button:hover {
 
 button {
     width: fit-content;
-    flex-shrink: 0;
+    padding: 5px;
     align-self: center;
     background: var(--bg);
     margin-bottom: 20px;
     color: var(--fg);
     border-radius: 6px;
     border: none;
-    font-size: 2em;
+    font-size: 1em;
 }
 
 .icon::after {
@@ -150,5 +158,22 @@ button {
     align-items: flex-start;
 }
 
+.time {
+    color: var(--fgHover);
+    opacity: 1;
+}
+
+.datacontent {
+    width: 100%;
+    position: relative;
+    display: flex;
+
+}
+
+
+.rowWrapper {
+    display: flex;
+    justify-content: space-around;
+}
 
 
