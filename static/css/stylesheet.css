@@ -4,10 +4,12 @@ html, body {
     margin: 0 auto;
     --fgHover: rgb(32, 32, 32, 0.1);
     --fg: #222;
-    --bg: #eeecec;
-    font-family: 'Fira Sans', sans-serif;
+    --nav: #D4D0C8;
+    --navDarker: #aeaba6; 
+    --bg: white;
+    font-family: 'JetBrains Mono', monospace;
     font-weight: 300;
-    background: var(--bg);
+    background-color: black;
     color: var(--fg);
 }
 
@@ -21,17 +23,20 @@ body.dark {
     color: var(--fg);
     flex-grow: 1;
     position: relative;
-    margin: 0;
+    margin: 0 5px 0 5px;
     padding: 0;
 }
 
 main {
-    max-width: 800px;
+    max-width: 804px;
     height: 100vh;
     margin: 0 auto;
+    background: var(--bg);
+    outline: 4px solid var(--nav);
+    border: 1px solid black;
     display: flex;
     flex-direction: column;
-    width: calc(100% - 2em);
+    width: calc(100% - 4px);
 }
 
 @media (max-width:640px)  { 
@@ -65,6 +70,9 @@ footer {
     justify-content: center;
 }
 
+strong {
+    font-weight: 700 !important;
+}
 
 .textbox {
     width: 100%;
@@ -73,7 +81,6 @@ footer {
 
 a {
     text-decoration: underline;
-    color: var(--fg);
 }
 
 a:hover{
@@ -82,18 +89,19 @@ a:hover{
 
 textarea, .p-heights, input {
     box-sizing: border-box;
-    border: none;
     margin: 10px 0 10px 0;
-    border-radius: 5px;
     width: 100%;
     color: var(--fg);
     font-size: 1em;
     min-height: 2em;
     line-height: 1.5em;
-    font-family: 'Inconsolata', monospace;
+    font-family: 'JetBrains Mono', monospace;
     background: white;
-    outline: black;
+    border: 2px solid black;
+    border-top-width: 4px;
+    border-left-width: 4px;
     word-wrap: break-word;
+    outline: none;
     white-space: pre-wrap;
 }
 
@@ -115,16 +123,21 @@ textarea {
 button:hover {
     background: var(--fgHover);
 }
+.action {
+    border: 2px solid black;
+    border-top-width: 4px;
+    border-left-width: 4px;
+    margin-bottom: 20px;
+    padding: 5px;
+}
+
 
 button {
     width: fit-content;
-    padding: 5px;
     align-self: center;
-    background: var(--bg);
-    margin-bottom: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--nav);
     color: var(--fg);
-    border-radius: 6px;
-    border: none;
     font-size: 1em;
 }
 
@@ -177,3 +190,66 @@ button {
 }
 
 
+
+nav {
+    width: 100%;
+    height: 105px;
+    background: var(--nav);
+    display: flex;
+    flex-direction: column;
+}
+
+.titleNav, .welcomeNav {
+    margin: 1px 1px 0 1px;
+}
+
+.titleNav {
+    background-color: #e5e5f7;
+    opacity: 0.8;
+    background-size: 10px 10px;
+    background-image: repeating-linear-gradient(45deg, #444cf7 0, #444cf7 1px, #e5e5f7 0, #e5e5f7 50%);
+    color: white;
+    text-align: center;
+}
+
+
+.cover {
+    background: #444cf7;
+}
+
+.welcomeNav {
+    width: fit-content;
+    font-weight: 400;
+    box-shadow: 3px 2px 1px 1px black;
+    border-top: 2px solid var(--navDarker);
+    border-left: 2px solid var(--navDarker);
+    padding-left: 3px;
+}
+
+.welcomeNav:hover{
+    transform: translate(2px, 2px);
+}
+
+
+.navSubar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom-width: 0;
+    box-shadow: 3px 2px 1px 1px black;
+    border-left: 2px solid var(--navDarker);
+}
+
+.navSubar button {
+    outline: none;
+    border: none;
+    height: fit-content;
+}
+
+.navInput {
+    background: white;
+    flex-grow: 1;
+    border: 1px solid black;
+    border-top-width: 3px;
+    border-left-width: 3px;
+}

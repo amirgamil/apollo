@@ -38,6 +38,7 @@ class Result extends Component {
     create({title, link, content}) {
         return html`<div>
             <a href=${link}>${title}</a>
+            <p>${content.slice(0, 100) + "..."}</p>
         </div>`
     }
 }
@@ -97,10 +98,31 @@ class SearchEngine extends Component {
         this.loadSearchResults(this.searchInput);
     }
 
+    styles() {
+        return css`
+            .engineTitle {
+                align-self: center;
+            }
+            .blue {
+                color: #2A63BF;
+            }
+
+            .red {
+                color: #E34133;
+            }
+            .yellow {
+                color: #F3B828;
+            }
+            .green {
+                color: #32A556;
+            }
+        `
+    }
+
     create() {
         return html`<div class = "engine">
-            <h1>Apollo</h1>
-            <input oninput=${this.handleInput} value=${this.searchInput} placeholder="Search across your digital footprint"/>
+            <h1 class="engineTitle"><span class="blue">A</span><span class="red">p</span><span class="yellow">o</span><span class="blue">l</span><span class="green">l</span><span class="yellow">o</span></h1>
+            <input oninput=${this.handleInput} value=${this.searchInput} placeholder="Search my digital footprint"/>
             <p class="time">${this.time}</p>
             ${this.loading ? html`<p>loading...</p>` : this.searchResultsList.node} 
         </div>`
@@ -193,13 +215,35 @@ class DigitalFootPrint extends Component {
                 <pre class="p-heights littlePadding ${content.endsWith("\n") ? 'endline' : ''}">${content}</pre>
             </div>
             <div class="rowWrapper">
-                <button onclick=${this.scrapeData}>Scrape</button> 
-                <button onclick=${this.addData}>Add</button>
+                <button class="action" onclick=${this.scrapeData}>Scrape</button> 
+                <button class="action" onclick=${this.addData}>Add</button>
             </div>
         </div>`
     }
 }
 
+const about = html`<div>
+    <h1>About</h1>
+    <p>Apollo is an attempt at making something that has felt impersoal for the longest time, personal again. 
+        
+    </p>
+
+    <p>
+        The computer revolution produced
+        <strong>personal computers</strong> yet <strong>impersonal search engines.</strong> It's a Unix-style search engine
+        for your digital footprint. The design authentically steals from the past. This is intentional. When I use Apollo, I want to feel like I'm 
+        <strong>travelling through the past.</strong>
+    </p>
+
+    <p>How do I define <strong>digital footprint?</strong> There are many possible definitions here, I define it as <strong>anything
+        digital you come across that you would want to remember in the future.</strong>
+        
+    </p>
+    <p>
+        It's like an indexable database or search engine for anything interesting I come across the web. There are also some personal data 
+        sources I pull from like 
+    </p>
+</div>`
 
 class App extends Component {
     init() {
@@ -209,14 +253,24 @@ class App extends Component {
             route: "/search",
             handler: (route, params) => {
                 this.engine = new SearchEngine(this.router, params["q"]);
+                this.route = route;
                 this.render();
             }
         });
 
         this.router.on({
+            route: ["/about", "/add"],
+            handler: (route) => {
+                this.route = route;
+                this.render();
+            }
+        })
+
+        this.router.on({
             route: "/",
             handler: (route) => {
                 this.engine = new SearchEngine(this.router);
+                this.route = route;
                 this.render();
             }
         });
@@ -224,9 +278,29 @@ class App extends Component {
 
     create() {
         return html`<main>
+            <nav>
+                <div class="topNav"> 
+                    <h5 class="titleNav"><strong class="cover">Apollo: A personal 🔎 engine</strong></h5>
+                    <h5 class="welcomeNav">Amir's Digital 👣</h5>
+                    <div class="navSubar">
+                        <button title="Home" onclick=${() => this.router.navigate("/")}><img src="static/img/home.png" /></button>
+                        <button title="Add a record" onclick=${() => this.router.navigate("/add")} ><img src="static/img/add.png" /></button>
+                        <button title="About" onclick=${() => this.router.navigate("/about")} ><img src="static/img/about.png" /></button>
+                        <input class="navInput" placeholder=${window.location.href} />
+                    </div>
+                </div>
+            </nav>
             <div class = "content">
-                ${this.engine.node}
-                ${this.footprint.node}
+                ${() => {
+                    switch (this.route) {
+                        case "/add":
+                            return this.footprint.node;
+                        case "/about":
+                            return about;
+                        default:
+                            return this.engine.node;
+                    }
+                }}
             </div>
             <footer>Built with <a href="https://github.com/amirgamil/poseidon">Poseidon</a> by <a href="https://amirbolous.com/">Amir</a></footer>
         </main>` 
