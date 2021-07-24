@@ -1,15 +1,16 @@
 package sources
 
 import (
+	"encoding/json"
 	"errors"
-	"json"
+	"fmt"
 	"log"
 	"os"
 
-	"github.com/amirgamil/apollo/pkg/apollo/backend"
+	"github.com/amirgamil/apollo/pkg/apollo/schema"
 )
 
-const athenaPath = "./athena/data.json"
+const athenaPath = "../athena/data.json"
 
 type thought struct {
 	H string   `json:"h"`
@@ -17,13 +18,14 @@ type thought struct {
 	T []string `json: "t"`
 }
 
-func getAthena() []backend.Data {
-	data, err := loadData()
+func getAthena() []schema.Data {
+	data, err := loadAthenaData()
 	if err != nil {
 		log.Fatal(err)
-		return []backend.Data{}
+		return []schema.Data{}
 	}
 	dataToIndex := convertToReqFormat(data)
+	fmt.Println(dataToIndex)
 	return dataToIndex
 }
 
@@ -38,10 +40,10 @@ func loadAthenaData() ([]thought, error) {
 }
 
 //takes a lists of thoughts and converts it into the require data struct we need for the api
-func convertToReqFormat(data []thought) []backend.Data {
-	dataToIndex := make([]backend.Data, len(data))
+func convertToReqFormat(data []thought) []schema.Data {
+	dataToIndex := make([]schema.Data, len(data))
 	for i, thought := range data {
-		dataToIndex[i] = backend.Data{Title: thought.H, Content: thought.B, Link: "https://athena.amirbolous.com", Tags: thought.T}
+		dataToIndex[i] = schema.Data{Title: thought.H, Content: thought.B, Link: "https://athena.amirbolous.com", Tags: thought.T}
 	}
 	return dataToIndex
 }

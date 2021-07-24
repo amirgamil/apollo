@@ -16,7 +16,8 @@ html, body {
 body.dark {
     --fg: #fafafa;
     --fgHover: rgb(250,250,250, 0.1);
-    --bg: #222;
+    --nav: #8a8986;
+    --bg: black; /*prev: #222 and rgb(32,32,32)*/
 }
 
 .content {
@@ -29,11 +30,11 @@ body.dark {
 
 main {
     max-width: 804px;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0 auto;
     background: var(--bg);
     outline: 4px solid var(--nav);
-    border: 1px solid black;
+    border: 3px solid black;
     display: flex;
     flex-direction: column;
     width: calc(100% - 4px);
@@ -80,10 +81,10 @@ strong {
 }
 
 a {
-    text-decoration: underline;
+    color: #9d7ac1;
 }
 
-a:hover{
+a:hover {
     text-decoration: underline;
 }
 
@@ -96,8 +97,8 @@ textarea, .p-heights, input {
     min-height: 2em;
     line-height: 1.5em;
     font-family: 'JetBrains Mono', monospace;
-    background: white;
-    border: 2px solid black;
+    background: var(--bg);
+    border: 2px solid var(--fg);
     border-top-width: 4px;
     border-left-width: 4px;
     word-wrap: break-word;
@@ -124,7 +125,7 @@ button:hover {
     background: var(--fgHover);
 }
 .action {
-    border: 2px solid black;
+    border: 2px solid var(--fg);
     border-top-width: 4px;
     border-left-width: 4px;
     margin-bottom: 20px;
@@ -207,14 +208,14 @@ nav {
     background-color: #e5e5f7;
     opacity: 0.8;
     background-size: 10px 10px;
-    background-image: repeating-linear-gradient(45deg, #444cf7 0, #444cf7 1px, #e5e5f7 0, #e5e5f7 50%);
+    background-image: repeating-linear-gradient(45deg, var(--navDarker), var(--navDarker)1px, #e5e5f7 0, #e5e5f7 50%);
     color: white;
     text-align: center;
 }
 
 
 .cover {
-    background: #444cf7;
+    background: #6165EE;
 }
 
 .welcomeNav {

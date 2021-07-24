@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/amirgamil/apollo/pkg/apollo/backend"
+	"github.com/amirgamil/apollo/pkg/apollo/schema"
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 )
@@ -20,13 +21,14 @@ func check(e error) {
 	}
 }
 
-const dbPath = "./data/db.json"
+//records which are stored locally, which have been added via Apollo directly
+const localRecordsPath = "./data/local.json"
 
 //hold rows of data that have yet to be flushed in the inverted index
 
 //TODO: will need to add some intelligent, heuristic based methods when syncing with other modules to check if it's a link that it gets scraped
 
-var data []backend.Data
+var data []schema.Record
 
 func index(w http.ResponseWriter, r *http.Request) {
 	indexFile, err := os.Open("./static/index.html")
@@ -42,7 +44,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 func scrape(w http.ResponseWriter, r *http.Request) {
 	linkToScraoe := r.FormValue("q")
 	w.Header().Set("Content-Type", "application/json")
-	result, err := backend.Scrape(linkToScraoe)
+	result, err := schema.Scrape(linkToScraoe)
 	if err != nil {
 		log.Fatal("Error trying to parse an article!")
 		w.WriteHeader(http.StatusExpectationFailed)
@@ -52,13 +54,16 @@ func scrape(w http.ResponseWriter, r *http.Request) {
 }
 
 func addData(w http.ResponseWriter, r *http.Request) {
-	var newData backend.Data
+	var newData schema.Data
 	err := jsoniter.NewDecoder(r.Body).Decode(&newData)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 	} else {
-		data = append(data, newData)
-		err = writeDataToDisk()
+		//get the record from the data
+		//note all records stored locally on apollo start with prefix lc
+		record := backend.GetRecordFromData(newData, fmt.Sprintf("lc%d", len(data)))
+		data = append(data, record)
+		err = writeRecordToDisk()
 		if err != nil {
 			w.WriteHeader(http.StatusExpectationFailed)
 		} else {
@@ -81,8 +86,8 @@ func search(w http.ResponseWriter, r *http.Request) {
 }
 
 //writes the current cache in memory to disk i.e. saves the database for persistent storage
-func writeDataToDisk() error {
-	jsonFile, err := os.OpenFile(dbPath, os.O_WRONLY|os.O_CREATE, 0755)
+func writeRecordToDisk() error {
+	jsonFile, err := os.OpenFile(localRecordsPath, os.O_WRONLY|os.O_CREATE, 0755)
 	defer jsonFile.Close()
 	//error may occur when reading from an empty file for the first time
 	if err != nil {
@@ -96,7 +101,7 @@ func writeDataToDisk() error {
 }
 
 func loadData() {
-	file, err := os.Open(dbPath)
+	file, err := os.Open(localRecordsPath)
 	if err != nil {
 		fmt.Println("Error loading the database with new data!")
 	}

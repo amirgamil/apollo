@@ -4,19 +4,21 @@ import (
 	"fmt"
 	"math"
 	"sort"
+
+	"github.com/amirgamil/apollo/pkg/apollo/schema"
 )
 
 //TODO: should search titles too (and put high probability mass on those tokens)
 
 //given a query string a search type (AND / OR ) returns a list of matches ordered by relevance
-func Search(query string, searchType string) []Record {
+func Search(query string, searchType string) []schema.Record {
 	//1. Gets results of a query
 	//keep it in a Go map that acts as a set
 	results := make(map[string]bool)
 	//2. Apply same analysis as when ingesting data i.e. tokenizing and stemming
 	queries := Analyze(query)
 	if len(queries) == 0 {
-		return make([]Record, 0)
+		return make([]schema.Record, 0)
 	}
 	//Support for AND / OR (TODO: eventually add NOT)
 	if searchType == "AND" {
@@ -31,7 +33,7 @@ func Search(query string, searchType string) []Record {
 			tempRecords[recordID] = true
 		}
 		for recordID, _ := range tempRecords {
-			record := globalRecordList[recordID]
+			record := getRecordFromID(recordID)
 			for i := 1; i < len(queries); i++ {
 				_, tokenInRecord := record.TokenFrequency[queries[i]]
 				if !tokenInRecord {
@@ -64,26 +66,35 @@ func Search(query string, searchType string) []Record {
 
 }
 
+//helper method which return a record from the associated id
+func getRecordFromID(id string) schema.Record {
+	if id[:2] == "lc" {
+		return localRecordList[id]
+	} else {
+		return sourcesRecordList[id]
+	}
+}
+
 //idf = log(total number of documents / number of documents that contain term) - ensures tokens which are rarer get a higher score
 func idf(token string) float64 {
-	return math.Log10(float64(len(globalRecordList)) / float64(len(globalInvertedIndex[token])))
+	return math.Log10(float64(len(localRecordList)+len(sourcesRecordList)) / float64(len(globalInvertedIndex[token])))
 }
 
 //ranks an unordered list of records based on relevance, uses the inverse document frequency which is a
 //document-level statistic that scores how relevant a document (record in our case) matches our query
 //then multiplty by the number of times the token gets mentioned in the token
 //returns an ordered list of records from most to least relevant
-func rank(results map[string]bool, queries []string) []Record {
+func rank(results map[string]bool, queries []string) []schema.Record {
 	type recordRank struct {
-		record Record
+		record schema.Record
 		score  float64
 	}
 	//defining a fixed-size array is faster and more memory efficieny
-	rankedResults := make([]Record, len(results))
+	rankedResults := make([]schema.Record, len(results))
 	unsortedResults := make([]recordRank, len(results))
 	i := 0
 	for recordID, _ := range results {
-		record := globalRecordList[recordID]
+		record := getRecordFromID(recordID)
 		score := float64(0)
 		for _, token := range queries {
 			idfVal := idf(token)

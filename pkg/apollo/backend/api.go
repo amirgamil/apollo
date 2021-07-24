@@ -1,64 +1,42 @@
 package backend
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/amirgamil/apollo/pkg/apollo/schema"
+	"github.com/amirgamil/apollo/pkg/apollo/sources"
 	jsoniter "github.com/json-iterator/go"
 )
 
 //assume for now that new data that has not been built into the inverted index gets stored
 //in some JSON file that is available locally
 
-//smallest unit of data that we store in the database
-//this will store each "item" in our search engine with all of the necessary information
-//for the interverted index
-type Record struct {
-	//unique identifier
-	ID string `json:"id"`
-	//title
-	Title string `json:"title"`
-	//potential link to the source if applicable
-	Link string `json:"link"`
-	//text content to display on results page
-	Content string `json:"content"`
-	//map of tokens to their frequency
-	TokenFrequency map[string]int `json:"tokenFrequency"`
-}
-
-//represents raw data that we will parse objects into before they have been transformed into records
-//and stored in our database
-type Data struct {
-	Title   string   `json:"title"`
-	Link    string   `json:"link"`
-	Content string   `json:"content"`
-	Tags    []string `json:"tags"`
-	//TODO: add metadata, should be able to search based on type of record, document, podcast, personal etc.
-}
-
 //TODO: fix all error handling
-
-//list of newly added data that has yet to be added to our inverted index - this is flushed periodically
-var data []Data
 
 //maps tokens to an array of pointers to records
 //maps strings or tokens to array of record ids
 var globalInvertedIndex map[string][]string
 
-//global list of every single record
-var globalRecordList map[string]Record
+//global list of all records which are stored locally
+//maps strings which are unique ids of each record to the record
+var localRecordList map[string]schema.Record
 
-//database of all NEW data that has been accumalated that needs to be flushed into the inverted index
-const dbPath = "./data/db.json"
+//global list of records pull in from data sources
+var sourcesRecordList map[string]schema.Record
 
 //database of inverted index for ALL of the data
 //maps strings (i.e tokens) to string ids
 const invertedIndexPath = "./data/index.json"
 
-//database of all of records
-const recordsPath = "./data/records.json"
+//database of all of records stored locally
+//all ids start with lc<an integer>
+const localRecordsPath = "./data/local.json"
+
+//database of the records we compute from the sources
+//all ids start with sr<an integer>
+const sourcesPath = "./data/sources.json"
 
 func createFile(path string) {
 	f, errCreating := os.Create(path)
@@ -82,13 +60,12 @@ func ensureDataExists(path string) {
 //helper function which should be called when the program is initialized so that the necessary files and paths
 //exist in our database
 func InitializeFilesAndData() {
-	ensureDataExists(dbPath)
+	ensureDataExists(sourcesPath)
 	ensureDataExists(invertedIndexPath)
-	ensureDataExists(recordsPath)
-	data = make([]Data, 0)
+	ensureDataExists(localRecordsPath)
 	globalInvertedIndex = make(map[string][]string)
-	globalRecordList = make(map[string]Record)
-
+	localRecordList = make(map[string]schema.Record)
+	sourcesRecordList = make(map[string]schema.Record)
 }
 
 //loads the inverted path from disk to memory
@@ -104,27 +81,14 @@ func loadInvertedIndex() {
 	jsoniter.NewDecoder(jsonFile).Decode(&globalInvertedIndex)
 }
 
-func loadRecordsList() {
-	jsonFile, err := os.Open(recordsPath)
+func loadRecordsList(path string, list map[string]schema.Record) {
+	jsonFile, err := os.Open(path)
 	if err != nil {
 		fmt.Println("Error, could not load the inverted index")
 		return
 	}
 	defer jsonFile.Close()
-	jsoniter.NewDecoder(jsonFile).Decode(&globalRecordList)
-}
-
-//loads new data that needs to be flushed into our records and inverted index
-func loadNewData() {
-	data = make([]Data, 0)
-	jsonFile, err := os.Open(dbPath)
-	defer jsonFile.Close()
-	if err != nil {
-		//TODO: log error permanently
-		fmt.Println("Error opening the database")
-	}
-	//parse the raw JSON data into our array of structs
-	json.NewDecoder(jsonFile).Decode(&data)
+	jsoniter.NewDecoder(jsonFile).Decode(&list)
 }
 
 //takes a string of tokens and returns a map of each token to its frequency
@@ -152,73 +116,99 @@ func writeIndexToDisk() {
 }
 
 //helper method which writes the current the record list to disk
-func writeRecordListToDisk() {
-	jsonFile, err := os.OpenFile(recordsPath, os.O_WRONLY|os.O_CREATE, 0755)
+//parameters determine which record list we write
+func writeRecordListToDisk(path string, list map[string]schema.Record) {
+	jsonFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0755)
 	if err != nil {
 		fmt.Println("Error trying to write the new inverted index to disk")
 	}
 	defer jsonFile.Close()
-	jsoniter.NewEncoder(jsonFile).Encode(globalRecordList)
+	jsoniter.NewEncoder(jsonFile).Encode(list)
 }
 
-//helper method which empties the JSON file containing the previously new data to add our search engine's data
-func emptyTempDatabase() {
-	//call os.Create which will create a new empty JSON file, don't want to keep storing the old data since we don't need it
-	createFile(dbPath)
+//highest-level function that is called at regular intervals to recompute the ENTIRE inverted index to integrate
+//new data added via Apollo, resync data from the data sources, and include any saved records to Apollo
+func RefreshInvertedIndex() {
+	//loads the globals we need including the new data, previous records, and our current inverted index
+	loadGlobals()
+	//Order is important here
+	//Step 1: Write local stored records to the inverted index
+	flushSavedRecordsIntoInvertedIndex()
+	//Step 2a: resync data from data sources i.e. get all data again
+	sourceData := sources.GetData()
+	//Step 2b: flush data from data sources into inverted index, note we DO NOT save these records locally since they are stored
+	//in the origin of where we pulled them from. Since we get ALL of the data from our data sources each time this method is called, this
+	//prevents creating additional copies in our inverted index
+	flushDataSourcesIntoInvertedIndex(sourceData)
+
+	//write data to disk in inverted index and record JSON file
+	writeIndexToDisk()
+	writeRecordListToDisk(localRecordsPath, localRecordList)
+	writeRecordListToDisk(sourcesPath, sourcesRecordList)
 }
 
-//this is the method that will intermittently take the raw data from the current JSON file that needs to be converted
-//and "flush it" or put it into the inverted index
-//this is the "highest level" method which gets called as part of this script
-func FlushNewDataIntoInvertedIndex() {
-	loadNewData()
+func loadGlobals() {
 	loadInvertedIndex()
-	loadRecordsList()
-	//for now, assume we have the entire content - later build a web crawler that gets the content
+	loadRecordsList(localRecordsPath, localRecordList)
+	loadRecordsList(sourcesPath, sourcesRecordList)
+}
+
+//takes all of the saved records and puts them in our inverted index
+func flushSavedRecordsIntoInvertedIndex() {
+	//we already have token frequency data precomputed and saved, so just add it to inverted index directly
+	for key, record := range localRecordList {
+		writeTokenFrequenciesToInvertedIndex(record.TokenFrequency, key)
+	}
+}
+
+func GetRecordFromData(currData schema.Data, uniqueID string) schema.Record {
+	//tokenize, stem, and filter
+	tokens := Analyze(currData.Content)
+
+	//count frequency and create `Record`
+	frequencyOfTokens := countFrequencyTokens(tokens)
+
+	//adds meta level tags defined into the data - how do we set the frequency? Since these are global tags
+	//we push some more probability on them since the user said these were important to index by
+	//use a simple heuristic of pushing ~20% of "counts" on them
+	//TODO: is there a more intellignet heuristic we can use here
+	frequencyToAdd := len(tokens) / 5
+	for _, metaTag := range currData.Tags {
+		_, metaTagInMap := frequencyOfTokens[metaTag]
+		if metaTagInMap {
+			frequencyOfTokens[metaTag] += frequencyToAdd
+		} else {
+			frequencyOfTokens[metaTag] = frequencyToAdd
+		}
+	}
+
+	//store record in our tokens list
+	record := schema.Record{ID: uniqueID, Title: currData.Title, Link: currData.Link, Content: currData.Content, TokenFrequency: frequencyOfTokens}
+	return record
+}
+
+//method takes data and flushes it into our inverted index
+//Note since th
+func flushDataSourcesIntoInvertedIndex(data []schema.Data) {
 	for i := 0; i < len(data); i++ {
 		currData := data[i]
 		//need to get a unique ID for the data - use the number of records we have so far (i.e. length of the record list)
-		uniqueID := fmt.Sprint(len(globalRecordList))
-		//tokenize, stem, and filter
-		tokens := Analyze(currData.Content)
-
-		//count frequency and create `Record`
-		frequencyOfTokens := countFrequencyTokens(tokens)
-
-		//adds meta level tags defined into the data - how do we set the frequency? Since these are global tags
-		//we push some more probability on them since the user said these were important to index by
-		//use a simple heuristic of pushing ~20% of "counts" on them
-		//TODO: is there a more intellignet heuristic we can use here
-		frequencyToAdd := len(tokens) / 5
-		for _, metaTag := range currData.Tags {
-			_, metaTagInMap := frequencyOfTokens[metaTag]
-			if metaTagInMap {
-				frequencyOfTokens[metaTag] += frequencyToAdd
-			} else {
-				frequencyOfTokens[metaTag] = frequencyToAdd
-			}
-		}
-
-		//store record in our tokens list
-		record := Record{ID: uniqueID, Title: currData.Title, Link: currData.Link, Content: currData.Content, TokenFrequency: frequencyOfTokens}
-		globalRecordList[uniqueID] = record
-
-		//loop through final frequencyOfTokens and add it to our inverted index database
-		for key, _ := range frequencyOfTokens {
-			_, keyInInvertedIndex := globalInvertedIndex[key]
-			if keyInInvertedIndex {
-				globalInvertedIndex[key] = append(globalInvertedIndex[key], uniqueID)
-			} else {
-				globalInvertedIndex[key] = []string{uniqueID}
-			}
-		}
-
+		uniqueID := fmt.Sprintf("sr%d", len(sourcesRecordList))
+		record := GetRecordFromData(currData, uniqueID)
+		sourcesRecordList[uniqueID] = record
+		writeTokenFrequenciesToInvertedIndex(record.TokenFrequency, uniqueID)
 	}
-	//write data to disk in inverted index and record JSON file
-	writeIndexToDisk()
-	writeRecordListToDisk()
+}
 
-	//empty the database file since we have flushed into the index and persisted to disk
-	//comment out while we test stuff
-	// emptyTempDatabase()
+//write a map of tokens to their counts in our inverted index
+func writeTokenFrequenciesToInvertedIndex(frequencyOfTokens map[string]int, uniqueID string) {
+	//loop through final frequencyOfTokens and add it to our inverted index database
+	for key, _ := range frequencyOfTokens {
+		_, keyInInvertedIndex := globalInvertedIndex[key]
+		if keyInInvertedIndex {
+			globalInvertedIndex[key] = append(globalInvertedIndex[key], uniqueID)
+		} else {
+			globalInvertedIndex[key] = []string{uniqueID}
+		}
+	}
 }

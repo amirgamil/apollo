@@ -36,6 +36,7 @@ class Result extends Component {
     }
 
     create({title, link, content}) {
+        console.log(link, content);
         return html`<div>
             <a href=${link}>${title}</a>
             <p>${content.slice(0, 100) + "..."}</p>
@@ -211,7 +212,7 @@ class DigitalFootPrint extends Component {
             <input oninput=${this.handleLink} value=${link} placeholder="Link"/> 
             <input oninput=${this.handleTags} value=${tags} placeholder="#put #tags #here"/> 
             <div class = "datacontent">
-                <textarea oninput=${this.handleContent} class="littlePadding" placeholder="Paste some content" value=${content}></textarea>
+                <textarea oninput=${this.handleContent} class="littlePadding" placeholder="Paste some content or scrape it" value=${content}></textarea>
                 <pre class="p-heights littlePadding ${content.endsWith("\n") ? 'endline' : ''}">${content}</pre>
             </div>
             <div class="rowWrapper">
@@ -230,19 +231,32 @@ const about = html`<div>
 
     <p>
         The computer revolution produced
-        <strong>personal computers</strong> yet <strong>impersonal search engines.</strong> It's a Unix-style search engine
+        <strong>personal computers</strong> yet <strong>impersonal search engines.</strong> So what's Apollo? It's a Unix-style search engine
         for your digital footprint. The design authentically steals from the past. This is intentional. When I use Apollo, I want to feel like I'm 
         <strong>travelling through the past.</strong>
     </p>
 
     <p>How do I define <strong>digital footprint?</strong> There are many possible definitions here, I define it as <strong>anything
-        digital you come across that you would want to remember in the future.</strong>
+        digital I come across that I want to remember in the future.</strong>
         
     </p>
     <p>
         It's like an indexable database or search engine for anything interesting I come across the web. There are also some personal data 
-        sources I pull from like 
+        sources I pull from like <a href="https://github.com/amirgamil/athena">Athena</a> for my thoughts or 
+        <a href="https://zeus.amirbolous.com/">Zeus</a> for curated resources or <a href="https://www.amazon.com/b/?node=11627044011">Kindle Highlights</a>. 
+        This is in addition to any interesting thing I come across the web, which I can add <a href = "">directly</a> via the web crawler. 
     </p>
+
+    <p>The web crawler can scrape any article or blog post and reliably get the text - so you can index the <strong>entire post</strong> without even 
+       having to copy it! Once again, this is intentional. I read a lot of stuff on the Internet but don't take notes (because I'm lazy). Now I can 
+       index <strong>anything interesting I come across</strong> and don't have to feel guilty about not having made notes. So just to be clear, 
+       I'm not indexing just the name of an article - I'm indexing <strong>the entire contents!</strong> If that's not cool, I don't know what is.
+    </p>
+
+    <p>I no longer have to rely on my memory to index anything interesting I come across. And now you don't have to either</p>
+
+    <p>P.S I put a lot of ❤️ in this project, I hope you like it :) </p>
+
 </div>`
 
 class App extends Component {
@@ -277,6 +291,14 @@ class App extends Component {
     }
 
     create() {
+        const hour = new Date().getHours();
+		if (hour > 19 || hour < 7) {
+			document.body.classList.add('dark');
+			document.documentElement.style.color = '#222';
+		} else {
+			document.body.classList.remove('dark');
+			document.documentElement.style.color = '#fafafa';
+		}
         return html`<main>
             <nav>
                 <div class="topNav"> 

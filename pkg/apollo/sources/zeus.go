@@ -2,13 +2,16 @@ package sources
 
 import (
 	"encoding/gob"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
-	"github.com/amirgamil/apollo/pkg/apollo/backend"
+	"github.com/PuerkitoBio/goquery"
+	"github.com/amirgamil/apollo/pkg/apollo/schema"
 )
 
-const zeusPath = "./zeus/db.gob"
+const zeusPath = "../zeus/db.gob"
 
 type List struct {
 	Key  string   `json:"key"`
@@ -17,15 +20,11 @@ type List struct {
 	Rule string `json:"rule"`
 }
 
-func getZeus() {
-
-}
-
-func loadZeusData() {
+func getZeus() []schema.Data {
 	//set of paths to ignore
-	ignore := map[string]bool{"podcasts": true}
+	ignore := map[string]bool{"podcasts": true, "startups": true}
 	cache := make(map[string]*List)
-	dataToIndex := make([]backend.Data, 0)
+	dataToIndex := make([]schema.Data, 0)
 	file, err := os.Open(zeusPath)
 	if err != nil {
 		log.Fatal("Error loading data from zeus")
@@ -34,20 +33,61 @@ func loadZeusData() {
 	for key, val := range cache {
 		_, toIgnore := ignore[key]
 		if !toIgnore {
-			getDataFromList(val, dataToIndex)
+			getDataFromList(val, &dataToIndex)
 		}
 	}
+	return dataToIndex
 }
 
-func getDataFromList(list *List, data []backend.Data) {
-	for _, listData := range list.Data {
-		//try to scrape link if applicable
+func getDataFromList(list *List, data *[]schema.Data) {
+	for index, listData := range list.Data {
+		//create model of the document first - recall items in Zeus are stored as rendered markdown which means HTML
+		listDoc, err := goquery.NewDocumentFromReader(strings.NewReader(listData))
+		if err != nil {
+			log.Fatal("Error parsing item in list component!")
+		}
+		var newItem schema.Data
+		//use some heuristics to decide whether we should `scrape` a link or
+		//just put it raw in our database
+		//need to navigate to the `body` of the pased HTML since goquery automatically populates html, head, and body
+		body := listDoc.Nodes[0].FirstChild.FirstChild.NextSibling
+		//If we only have an a tag or one inside another tag, this is probably an item we want to scrape (e.g. /articles)
+		if body.FirstChild.Data == "a" || body.FirstChild.FirstChild.Data == "a" {
+			newItem, err = scrapeLink(listDoc)
+			if err != nil {
+				fmt.Println("Error parsing link in list: ", listData, " defaulting to use link")
+			}
+		} else {
+			//otherwise, there's other content which we assume will (hopefully be indexable), may be adapted to be more intelligent
+			newItem = schema.Data{Title: fmt.Sprint("%s %s", list.Key, index), Link: "zeus.amirbolous.com/" + list.Key, Content: listData, Tags: make([]string, 0)}
+		}
 
 		//if it fails, send back the link, using tag words from the link
+		*data = append(*data, newItem)
 	}
 }
 
-//takes a rule and returns whether we should *try to* scrape a list item in Zeus
-func shouldScrapeLink(rule string) {
-
+//takes a document which is suspected to be an article or something that's scrapable and attempts to scrape it
+func scrapeLink(listDoc *goquery.Document) (schema.Data, error) {
+	var data schema.Data
+	var err error
+	listDoc.Find("a").Each(func(i int, s *goquery.Selection) {
+		link, hasLink := s.Attr("href")
+		if hasLink {
+			data, err = schema.Scrape(link)
+			if err != nil {
+				//add URL directly as data, to have our tokenizer extract something meaningful, we try to replace
+				//as many symbol we might find in URLs with spaces so the tokenizer can extract a couple of meaningful words
+				//from the title-
+				cleanedUpData := strings.ReplaceAll(link, "/", " ")
+				cleanedUpData = strings.ReplaceAll(link, "-", " ")
+				//Throw in the parent's title as well which might be useful, since most links are of the form <p><a></a></p>
+				cleanedUpData += s.Parent().Text()
+				data = schema.Data{Title: s.Parent().Text(), Content: cleanedUpData, Link: link, Tags: make([]string, 0)}
+			}
+		} else {
+			data = schema.Data{}
+		}
+	})
+	return data, err
 }
