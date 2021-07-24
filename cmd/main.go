@@ -10,7 +10,7 @@ func main() {
 	//server and the pipeline should run on concurrent threads, called regularly, for now manually do it
 	//start the server on a concurrent thread so that when we need to refresh the inverted index, this happens on
 	//different threads
-	backend.RefreshInvertedIndex()
+	// backend.RefreshInvertedIndex()
 	apollo.Start()
 	//two days in miliseconds
 	// ticker := time.NewTicker(2 * 24 * 60 * 60 * time.Millisecond)

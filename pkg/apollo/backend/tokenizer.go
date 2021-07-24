@@ -33,6 +33,10 @@ func splitByWhiteSpace(source string) []string {
 		_, isPunc := punctuation[char]
 		if char == " " {
 			addWord(&sb, &tokens)
+		} else if source[index] == 10 {
+			//check if this is a newline character, have to checkout without converting into string since that causes issues
+			addWord(&sb, &tokens)
+			sb.Reset()
 		} else if isPunc {
 			// continue to next iteration, don't write the string
 			//check if this is an apostrophe since we should treat contractions as two words

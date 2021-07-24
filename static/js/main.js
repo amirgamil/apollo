@@ -1,3 +1,13 @@
+// only fire fn once it hasn't been called in delay ms
+const debounce = (fn, delay) => {
+    let to = null;
+    return (...args) => {
+        const bfn = () => fn(...args);
+        clearTimeout(to);
+        to = setTimeout(bfn, delay);
+    }
+}
+
 class Data extends Atom {
 
 }
@@ -19,7 +29,10 @@ class SearchResults extends CollectionStoreOf(Data) {
                    }
                }).then(result => {
                     if (result) {
-                        this.setStore(result.map(element => new Data(element)));
+                        //time comes back in nanoseconds
+                        this.time = result.time * 0.000001;
+                        this.query = result.query;
+                        this.setStore(result.data.map(element => new Data(element)));
                     } else {
                         this.setStore([]);
                     }
@@ -36,7 +49,6 @@ class Result extends Component {
     }
 
     create({title, link, content}) {
-        console.log(link, content);
         return html`<div>
             <a href=${link}>${title}</a>
             <p>${content.slice(0, 100) + "..."}</p>
@@ -63,7 +75,9 @@ class SearchEngine extends Component {
         this.handleInput = this.handleInput.bind(this);
         this.loading = false;
         this.time = ""
-        this.loadSearchResults = this.loadSearchResults.bind(this);
+        //add a little bit of delay before we search because too many network requests
+        //will slow down retrieval of search results, especially as user is typing to their deired query
+        this.loadSearchResults = debounce(this.loadSearchResults.bind(this), 100);
         this.setSearchInput = this.setSearchInput.bind(this);
         //if we have a query on initialization, navigate to it directly
         if (this.query) {
@@ -73,11 +87,9 @@ class SearchEngine extends Component {
     }
 
     loadSearchResults(value) {
-        const start = new Date().getTime();
         this.searchData.fetch(value)
                         .then(() => {
                             this.loading = false;
-                            this.time = `${new Date().getTime() - start}ms`
                             this.render();
                         })
                         .catch(ex => {
@@ -121,10 +133,11 @@ class SearchEngine extends Component {
     }
 
     create() {
+        const time = this.searchData.time ? this.searchData.time.toFixed(2) : 0
         return html`<div class = "engine">
             <h1 class="engineTitle"><span class="blue">A</span><span class="red">p</span><span class="yellow">o</span><span class="blue">l</span><span class="green">l</span><span class="yellow">o</span></h1>
             <input oninput=${this.handleInput} value=${this.searchInput} placeholder="Search my digital footprint"/>
-            <p class="time">${this.time}</p>
+            <p class="time">${this.searchInput ? "About " + this.searchData.size + " results (" + time + "ms)" : null}</p>
             ${this.loading ? html`<p>loading...</p>` : this.searchResultsList.node} 
         </div>`
     }
@@ -154,7 +167,6 @@ class DigitalFootPrint extends Component {
             },
         }).then(response => {
             if (response.ok) {
-                console.log(response);
                 return response.json()
             } else {
                 Promise.reject(response)

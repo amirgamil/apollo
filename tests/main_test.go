@@ -69,4 +69,10 @@ func TestTokenizer(t *testing.T) {
 		t.Errorf(fmt.Sprintf("Uh oh, test 4 expected %s but got %s", expected, result))
 	}
 
+	result = backend.Tokenize("Test\nhello sir")
+	expected = []string{"test", "hello", "sir"}
+	equal = compareArrays(result, expected)
+	if !equal {
+		t.Errorf(fmt.Sprintf("Uh oh, test 4 expected %s but got %s", expected, result))
+	}
 }

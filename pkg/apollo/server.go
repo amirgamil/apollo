@@ -76,12 +76,12 @@ func search(w http.ResponseWriter, r *http.Request) {
 	searchQuery := r.FormValue("q")
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Println(searchQuery)
-	results := backend.Search(searchQuery, "AND")
-	if results != nil {
-		fmt.Println("results : ", results)
-		jsoniter.NewEncoder(w).Encode(results)
-	} else {
+	results, err := backend.Search(searchQuery, "AND")
+	if err != nil {
 		w.WriteHeader(http.StatusNoContent)
+	} else {
+		// fmt.Println("results : ", results)
+		jsoniter.NewEncoder(w).Encode(results)
 	}
 }
 

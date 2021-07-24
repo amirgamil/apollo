@@ -173,8 +173,8 @@ button {
 }
 
 .time {
-    color: var(--fgHover);
-    opacity: 1;
+    color: var(--fg);
+    opacity: 0.4;
 }
 
 .datacontent {

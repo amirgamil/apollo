@@ -1,9 +1,10 @@
 package backend
 
 import (
-	"fmt"
+	"errors"
 	"math"
 	"sort"
+	"time"
 
 	"github.com/amirgamil/apollo/pkg/apollo/schema"
 )
@@ -11,14 +12,15 @@ import (
 //TODO: should search titles too (and put high probability mass on those tokens)
 
 //given a query string a search type (AND / OR ) returns a list of matches ordered by relevance
-func Search(query string, searchType string) []schema.Record {
+func Search(query string, searchType string) (schema.Payload, error) {
 	//1. Gets results of a query
 	//keep it in a Go map that acts as a set
+	startTime := time.Now()
 	results := make(map[string]bool)
 	//2. Apply same analysis as when ingesting data i.e. tokenizing and stemming
 	queries := Analyze(query)
 	if len(queries) == 0 {
-		return make([]schema.Record, 0)
+		return schema.Payload{}, errors.New("No valid queries!")
 	}
 	//Support for AND / OR (TODO: eventually add NOT)
 	if searchType == "AND" {
@@ -62,7 +64,10 @@ func Search(query string, searchType string) []schema.Record {
 
 	//4. Sory by relevance - assign a score to each record that matches how relevant it is
 	//Use the inverse document frequency
-	return rank(results, queries)
+	records := rank(results, queries)
+	//convert searched time to miliseconds
+	time := int64(time.Now().Sub(startTime))
+	return schema.Payload{Time: time, Data: records, Query: queries}, nil
 
 }
 
@@ -103,7 +108,6 @@ func rank(results map[string]bool, queries []string) []schema.Record {
 		unsortedResults[i] = recordRank{record: record, score: score}
 		i += 1
 	}
-	fmt.Println(len(results), unsortedResults)
 	//sort by highest order score to lowest
 	sort.Slice(unsortedResults, func(i, j int) bool {
 		return unsortedResults[i].score > unsortedResults[j].score

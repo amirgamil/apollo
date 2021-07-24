@@ -20,6 +20,7 @@ type List struct {
 	Rule string `json:"rule"`
 }
 
+//TODO: add some intelligent code to not scrape if seen before, otherwise server costs to the moon lol
 func getZeus() []schema.Data {
 	//set of paths to ignore
 	ignore := map[string]bool{"podcasts": true, "startups": true}
@@ -50,16 +51,19 @@ func getDataFromList(list *List, data *[]schema.Data) {
 		//use some heuristics to decide whether we should `scrape` a link or
 		//just put it raw in our database
 		//need to navigate to the `body` of the pased HTML since goquery automatically populates html, head, and body
-		body := listDoc.Nodes[0].FirstChild.FirstChild.NextSibling
+		body := listDoc.Find("body")
+		firstChild := body.Children().Nodes[0]
+		secondChild := firstChild.FirstChild
 		//If we only have an a tag or one inside another tag, this is probably an item we want to scrape (e.g. /articles)
-		if body.FirstChild.Data == "a" || body.FirstChild.FirstChild.Data == "a" {
+		if firstChild.Data == "a" || secondChild.Data == "a" {
 			newItem, err = scrapeLink(listDoc)
 			if err != nil {
 				fmt.Println("Error parsing link in list: ", listData, " defaulting to use link")
 			}
 		} else {
+			fmt.Println(body.Text())
 			//otherwise, there's other content which we assume will (hopefully be indexable), may be adapted to be more intelligent
-			newItem = schema.Data{Title: fmt.Sprint("%s %s", list.Key, index), Link: "zeus.amirbolous.com/" + list.Key, Content: listData, Tags: make([]string, 0)}
+			newItem = schema.Data{Title: fmt.Sprintf("%s %d", list.Key, index), Link: "zeus.amirbolous.com/" + list.Key, Content: body.Text(), Tags: make([]string, 0)}
 		}
 
 		//if it fails, send back the link, using tag words from the link

@@ -66,6 +66,7 @@ func InitializeFilesAndData() {
 	globalInvertedIndex = make(map[string][]string)
 	localRecordList = make(map[string]schema.Record)
 	sourcesRecordList = make(map[string]schema.Record)
+	loadGlobals()
 }
 
 //loads the inverted path from disk to memory
