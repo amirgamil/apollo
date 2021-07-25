@@ -46,7 +46,7 @@ func scrape(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	result, err := schema.Scrape(linkToScraoe)
 	if err != nil {
-		log.Fatal("Error trying to parse an article!")
+		log.Fatal("Error trying to scrape a digital artifact!")
 		w.WriteHeader(http.StatusExpectationFailed)
 	} else {
 		json.NewEncoder(w).Encode(result)

@@ -35,7 +35,7 @@ const invertedIndexPath = "./data/index.json"
 const localRecordsPath = "./data/local.json"
 
 //database of the records we compute from the sources
-//all ids start with sr<an integer>
+//all ids start with sr<potentially more identifiying inforation><an integer>
 const sourcesPath = "./data/sources.json"
 
 func createFile(path string) {
@@ -132,11 +132,13 @@ func writeRecordListToDisk(path string, list map[string]schema.Record) {
 func RefreshInvertedIndex() {
 	//loads the globals we need including the new data, previous records, and our current inverted index
 	loadGlobals()
+	//clean inverted index
+	globalInvertedIndex = make(map[string][]string)
 	//Order is important here
 	//Step 1: Write local stored records to the inverted index
 	flushSavedRecordsIntoInvertedIndex()
 	//Step 2a: resync data from data sources i.e. get all data again
-	sourceData := sources.GetData()
+	sourceData := sources.GetData(sourcesRecordList)
 	//Step 2b: flush data from data sources into inverted index, note we DO NOT save these records locally since they are stored
 	//in the origin of where we pulled them from. Since we get ALL of the data from our data sources each time this method is called, this
 	//prevents creating additional copies in our inverted index
@@ -190,11 +192,8 @@ func GetRecordFromData(currData schema.Data, uniqueID string) schema.Record {
 
 //method takes data and flushes it into our inverted index
 //Note since th
-func flushDataSourcesIntoInvertedIndex(data []schema.Data) {
-	for i := 0; i < len(data); i++ {
-		currData := data[i]
-		//need to get a unique ID for the data - use the number of records we have so far (i.e. length of the record list)
-		uniqueID := fmt.Sprintf("sr%d", len(sourcesRecordList))
+func flushDataSourcesIntoInvertedIndex(data map[string]schema.Data) {
+	for uniqueID, currData := range data {
 		record := GetRecordFromData(currData, uniqueID)
 		sourcesRecordList[uniqueID] = record
 		writeTokenFrequenciesToInvertedIndex(record.TokenFrequency, uniqueID)

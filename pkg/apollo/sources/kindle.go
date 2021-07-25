@@ -48,7 +48,7 @@ const newBooksPath = "./kindle/"
 //note save the kindle db in its original state as opposed to saving it in schema.Data format which would reduce repeated work
 //in case I want to use the data as is for the future
 
-func GetKindle() []schema.Data {
+func getKindle() map[string]schema.Data {
 	//ensure our kindle database exists
 	ensureKindleFileExists()
 	//load our kindle file
@@ -57,7 +57,7 @@ func GetKindle() []schema.Data {
 	//first check for new files in k
 	newBooks, err := checkForNewBooks()
 	if err != nil {
-		return []schema.Data{}
+		return make(map[string]schema.Data)
 	}
 	addNewBooksToDb(newBooks)
 	err = writeKindleDbToDisk()
@@ -82,14 +82,25 @@ func deleteBookFiles() {
 	}
 }
 
-func convertBooksToData() []schema.Data {
+func convertBooksToData() map[string]schema.Data {
 	//save each highlight as it's own entry as opposed to each book as it's own entry
-	data := make([]schema.Data, 0)
+	data := make(map[string]schema.Data)
 	for _, book := range kindleGlobal {
 		//iterate through the higlights
-		for _, highlights := range book.Highlights {
-			content := fmt.Sprintf("Highlight: \n %s\nNote: %s", highlights.Text, highlights.Note)
-			data = append(data, schema.Data{Title: book.Title, Link: highlights.Location.URL, Content: content, Tags: make([]string, 0)})
+		for index, highlight := range book.Highlights {
+			//check if this is highlight is already saved
+			keyInMap := fmt.Sprintf("srkd%s%d", book.ASIN, index)
+			if _, isInMap := sources[keyInMap]; !isInMap {
+				note := ""
+				if highlight.Note != nil {
+					highlightString, isString := highlight.Note.(string)
+					if isString {
+						note = highlightString
+					}
+				}
+				content := fmt.Sprintf("Highlight: \n\n %s\n\nNote: %s", highlight.Text, note)
+				data[keyInMap] = schema.Data{Title: book.Title, Link: highlight.Location.URL, Content: content, Tags: make([]string, 0)}
+			}
 		}
 	}
 	return data
@@ -101,7 +112,6 @@ func writeKindleDbToDisk() error {
 		return err
 	}
 	defer jsonFile.Close()
-	fmt.Println(kindleGlobal)
 	err = jsoniter.NewEncoder(jsonFile).Encode(kindleGlobal)
 	return err
 }
@@ -155,7 +165,7 @@ func checkForNewBooks() ([]Book, error) {
 		//open the file
 		file, err := os.Open(newBooksPath + f.Name())
 		if err != nil {
-			log.Println("Error trying to open kindle file: ", f.Name, " with err: ", err)
+			log.Println("Error trying to open kindle file: ", f.Name(), " with err: ", err)
 			return []Book{}, err
 		}
 		var newBook Book

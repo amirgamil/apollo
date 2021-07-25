@@ -18,11 +18,11 @@ type thought struct {
 	T []string `json: "t"`
 }
 
-func getAthena() []schema.Data {
+func getAthena() map[string]schema.Data {
 	data, err := loadAthenaData()
 	if err != nil {
-		log.Fatal(err)
-		return []schema.Data{}
+		log.Println(err)
+		return make(map[string]schema.Data)
 	}
 	dataToIndex := convertToReqFormat(data)
 	fmt.Println(dataToIndex)
@@ -40,10 +40,14 @@ func loadAthenaData() ([]thought, error) {
 }
 
 //takes a lists of thoughts and converts it into the require data struct we need for the api
-func convertToReqFormat(data []thought) []schema.Data {
-	dataToIndex := make([]schema.Data, len(data))
+func convertToReqFormat(data []thought) map[string]schema.Data {
+	dataToIndex := make(map[string]schema.Data)
 	for i, thought := range data {
-		dataToIndex[i] = schema.Data{Title: thought.H, Content: thought.B, Link: "https://athena.amirbolous.com", Tags: thought.T}
+		//check if we've computed the data for this already
+		keyInMap := fmt.Sprintf("srat%d", i)
+		if _, isInMap := sources[keyInMap]; !isInMap {
+			dataToIndex[keyInMap] = schema.Data{Title: thought.H, Content: thought.B, Link: "https://athena.amirbolous.com", Tags: thought.T}
+		}
 	}
 	return dataToIndex
 }

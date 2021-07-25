@@ -121,6 +121,7 @@ class SearchEngine extends Component {
         this.searchResultsList = new SearchResultsList(this.searchData);
         this.handleInput = this.handleInput.bind(this);
         this.loading = false;
+        this.modalT
         //used to change selected results based on arrow keys
         this.selected = 0;
         this.time = ""
@@ -255,14 +256,25 @@ class DigitalFootPrint extends Component {
         this.handleInput = this.handleInput.bind(this);
         this.handleTitle = (evt) => this.handleInput("title", evt);
         this.handleLink = (evt) => this.handleInput("link", evt);
+        this.showModal = false;
+        this.modalText = "";
         this.handleContent = (evt) => this.handleInput("content", evt);
         this.handleTags = (evt) => this.handleInput("tags", evt);
         this.addData = this.addData.bind(this);
         this.scrapeData = this.scrapeData.bind(this);
+        this.closeModal = this.closeModal.bind(this);
         this.bind(this.data);
     }
 
+    closeModal() {
+        this.showModal = false;
+        this.render();
+    }
+
     scrapeData(evt) {
+        this.showModal = true;
+        this.modalText = "Hold on, doing some magic..."
+        this.render();
         fetch("/scrape?q=" + this.data.get("link"), {
             method: "POST",
             mode: "no-cors",
@@ -276,9 +288,13 @@ class DigitalFootPrint extends Component {
                 Promise.reject(response)
             }
         }).then(data => {
+            this.showModal = false;
             this.data.update({title: data["title"], content: data["content"]});
+            // window.scrollBy(0, document.body.scrollHeight);
         }).catch(ex => {
             console.log("Exception trying to fetch the article: ", ex)
+            this.modalText = "Error scraping, sorry!";
+            this.render();
         })
     }
 
@@ -314,6 +330,9 @@ class DigitalFootPrint extends Component {
             }
         }).catch(ex => {
             console.log("Error adding to the db: ", ex);
+            this.showModal = true;
+            this.modalText = "Error scraping, sorry!";
+            this.render();
         })
     }
 
@@ -335,6 +354,18 @@ class DigitalFootPrint extends Component {
                 <button class="action" onclick=${this.scrapeData}>Scrape</button> 
                 <button class="action" onclick=${this.addData}>Add</button>
             </div>
+            ${this.showModal ? html`<div class = "modal"> 
+                    <div class="modalContent">
+                        <div class="windowBar">
+                            <p class="modalNavTitle">popup</p> 
+                            <div class="navPattern"></div>
+                            <button class="closeModal" onclick=${this.closeModal}>x</button>
+                        </div>
+                        <div class="modalBody"> 
+                            <p>${this.modalText}</p>
+                        </div>
+                    </div>
+                </div>` : null}
         </div>`
     }
 }
