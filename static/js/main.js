@@ -226,7 +226,13 @@ class SearchEngine extends Component {
             //change the selected attribute
             evt.preventDefault();
             this.toggleSelected(evt.key);
-            
+        } else if (evt.key === "Enter") {
+            evt.preventDefault();
+            this.searchResultsList.nodes[this.selected].displayDetails = true;
+            this.searchResultsList.nodes[this.selected].render();
+        } else if (evt.key === "Escape") {
+            this.searchResultsList.nodes[this.selected].displayDetails = false;
+            this.searchResultsList.nodes[this.selected].render();
         }
     }
 

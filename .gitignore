@@ -1,3 +1,5 @@
 *.DS_Store
 static/CNAME
 *.json
+data/
+kindle/

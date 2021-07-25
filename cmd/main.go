@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/amirgamil/apollo/pkg/apollo"
 	"github.com/amirgamil/apollo/pkg/apollo/backend"
+	"github.com/amirgamil/apollo/pkg/apollo/sources"
 )
 
 func main() {
@@ -11,7 +11,8 @@ func main() {
 	//start the server on a concurrent thread so that when we need to refresh the inverted index, this happens on
 	//different threads
 	// backend.RefreshInvertedIndex()
-	apollo.Start()
+	sources.GetKindle()
+	// apollo.Start()
 	//two days in miliseconds
 	// ticker := time.NewTicker(2 * 24 * 60 * 60 * time.Millisecond)
 	// done := make(chan bool)

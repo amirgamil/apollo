@@ -10,5 +10,7 @@ func GetData() []schema.Data {
 	data = append(data, athena...)
 	zeus := getZeus()
 	data = append(data, zeus...)
+	// kindle = getKindle()
+	// data = append(data, kindle)
 	return data
 }
