@@ -78,7 +78,7 @@ func scrapeLink(listDoc *goquery.Document) (schema.Data, error) {
 	listDoc.Find("a").Each(func(i int, s *goquery.Selection) {
 		link, hasLink := s.Attr("href")
 		if hasLink {
-			data, err = schema.Scrape(link)
+			data, err = schema.Scrape(link) //TODO: check regex, scrape w. Text()?
 			if err != nil {
 				//add URL directly as data, to have our tokenizer extract something meaningful, we try to replace
 				//as many symbol we might find in URLs with spaces so the tokenizer can extract a couple of meaningful words

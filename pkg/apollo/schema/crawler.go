@@ -10,6 +10,7 @@ import (
 
 func Scrape(link string) (Data, error) {
 	article, err := readability.FromURL(link, 30*time.Second)
+	//add goquery and if it fails, return Text()?
 	if err != nil {
 		return Data{}, err
 	}

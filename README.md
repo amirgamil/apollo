@@ -77,3 +77,7 @@ So data sources can be easily integrated, this is by design in case I want to pu
 
 ## Document storage
 TODO
+
+
+## Future
+- Improve the search algorithm, change Elasticsearch when data grows a lot?

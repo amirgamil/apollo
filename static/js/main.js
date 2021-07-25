@@ -12,6 +12,12 @@ class Data extends Atom {
 
 }
 
+//takes a string of content and returns
+//a text with HTML tags injected for key query words
+const highlightContent = (text, query) => {
+    const regex = new RegExp(query.join(' '));
+    return text.replace(regex, `<span class="highlighted">${query[0]}</span>`);
+}
 
 class SearchResults extends CollectionStoreOf(Data) {
     fetch(query) {
@@ -32,7 +38,11 @@ class SearchResults extends CollectionStoreOf(Data) {
                         //time comes back in nanoseconds
                         this.time = result.time * 0.000001;
                         this.query = result.query;
-                        this.setStore(result.data.map(element => new Data(element)));
+                        this.setStore(result.data.map((element, id) => {
+                            element["selected"] = id === 0 ? true : false;
+                            element["content"] = highlightContent(element["content"], this.query); 
+                            return new Data(element);
+                        }));
                     } else {
                         this.setStore([]);
                     }
@@ -45,13 +55,50 @@ class SearchResults extends CollectionStoreOf(Data) {
 class Result extends Component {
     init(data, removeCallBack) {
         this.data = data;
-        this.removeCallBack = this.removeCallBack;
+        this.removeCallBack = removeCallBack;
+        this.displayDetails = false;
+        this.loadPreview = this.loadPreview.bind(this);
+        this.closeModal = this.closeModal.bind(this);
     }
 
-    create({title, link, content}) {
-        return html`<div>
-            <a href=${link}>${title}</a>
+    styles() {
+        return css`
+        `
+    }
+
+    loadPreview() {
+        this.displayDetails = true;
+        this.render();
+    }
+
+    closeModal(evt) {
+        //stop bubbling up DOM which would cancel this action by loading preview
+        evt.stopPropagation();
+        this.displayDetails = false;
+        this.render();
+    }
+
+
+    create({title, link, content, selected}) {
+        return html`<div class="result colWrapper ${selected ? 'hoverShow' : ''}" onclick=${this.loadPreview}>
+            <a onclick=${(evt) => evt.stopPropagation()} href=${link}>${title}</a>
             <p>${content.slice(0, 100) + "..."}</p>
+            ${this.displayDetails ? html`<div class = "modal"> 
+                    <div class="modalContent">
+                        <div class="windowBar">
+                            <p class="modalNavTitle">details.txt</p> 
+                            <div class="navPattern"></div>
+                            <button class="closeModal" onclick=${this.closeModal}>x</button>
+                        </div>
+                        <div class="modalBody"> 
+                            <div class="rowWrapper"> 
+                                <h2>${title}</h2>
+                            </div>
+                            <p><a href=${link}>Source</a></p>
+                            <p innerHTML = ${content}></p>
+                        </div>
+                    </div>
+                </div>` : null}
         </div>`
     }
 }
@@ -74,11 +121,15 @@ class SearchEngine extends Component {
         this.searchResultsList = new SearchResultsList(this.searchData);
         this.handleInput = this.handleInput.bind(this);
         this.loading = false;
+        //used to change selected results based on arrow keys
+        this.selected = 0;
         this.time = ""
         //add a little bit of delay before we search because too many network requests
         //will slow down retrieval of search results, especially as user is typing to their deired query
         this.loadSearchResults = debounce(this.loadSearchResults.bind(this), 100);
         this.setSearchInput = this.setSearchInput.bind(this);
+        this.handleKeydown = this.handleKeydown.bind(this);
+        this.toggleSelected = this.toggleSelected.bind(this);
         //if we have a query on initialization, navigate to it directly
         if (this.query) {
             this.setSearchInput(this.query);
@@ -132,11 +183,58 @@ class SearchEngine extends Component {
         `
     }
 
+    toggleSelected(state) {
+        const listSize = this.searchResultsList.size;
+        switch (state) {
+            case "ArrowDown":
+                this.selected += 1
+                if (this.selected < listSize) {
+                    window.scrollBy(0, 100);
+                    this.searchResultsList.nodes[this.selected - 1].data.update({"selected": false});
+                    this.searchResultsList.nodes[this.selected].data.update({"selected": true});
+                    this.searchResultsList.nodes[this.selected - 1].render();
+                } else {
+                    window.scrollTo(0, 0);
+                    this.selected = 0;
+                    this.searchResultsList.nodes[this.selected].data.update({"selected": true});
+                    this.searchResultsList.nodes[listSize - 1].data.update({"selected": false});
+                    this.searchResultsList.nodes[listSize - 1].render();
+                }
+                break;
+            case "ArrowUp":
+                this.selected -= 1;
+                if (this.selected >= 0) {
+                    window.scrollBy(0, -100);
+                    this.searchResultsList.nodes[this.selected + 1].data.update({"selected": false});
+                    this.searchResultsList.nodes[this.selected].data.update({"selected": true});
+                    this.searchResultsList.nodes[this.selected + 1].render();
+                } else {
+                    window.scrollBy(0, document.body.scrollHeight);
+                    this.selected = listSize - 1;
+                    this.searchResultsList.nodes[0].data.update({"selected": false});
+                    this.searchResultsList.nodes[this.selected].data.update({"selected": true});
+                    this.searchResultsList.nodes[0].render();
+                }
+            
+        }
+        this.searchResultsList.nodes[this.selected].render();
+    }
+
+    handleKeydown(evt) {
+        //deal with cmd a + backspace should empty all search results
+        if (evt.key === "ArrowDown" || evt.key === "ArrowUp") {
+            //change the selected attribute
+            evt.preventDefault();
+            this.toggleSelected(evt.key);
+            
+        }
+    }
+
     create() {
         const time = this.searchData.time ? this.searchData.time.toFixed(2) : 0
         return html`<div class = "engine">
             <h1 class="engineTitle"><span class="blue">A</span><span class="red">p</span><span class="yellow">o</span><span class="blue">l</span><span class="green">l</span><span class="yellow">o</span></h1>
-            <input oninput=${this.handleInput} value=${this.searchInput} placeholder="Search my digital footprint"/>
+            <input onkeydown=${this.handleKeydown} oninput=${this.handleInput} value=${this.searchInput} placeholder="Search my digital footprint"/>
             <p class="time">${this.searchInput ? "About " + this.searchData.size + " results (" + time + "ms)" : null}</p>
             ${this.loading ? html`<p>loading...</p>` : this.searchResultsList.node} 
         </div>`
@@ -273,7 +371,7 @@ const about = html`<div>
 
 class App extends Component {
     init() {
-        this.router = new Router();
+        this.router = new Router(3);
         this.footprint = new DigitalFootPrint();
         this.router.on({
             route: "/search",
