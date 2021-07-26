@@ -1,5 +1,5 @@
 # Apollo 💎
-### A Unix style personal search engine and web crawler for your digital footprint
+### A Unix-style personal search engine and web crawler for your digital footprint
 <div style="text-align:center">
     <img style="height:400px" src="./docs/apollo.png" alt="apollo demo">
 </div>
@@ -137,6 +137,7 @@ As a side note, although I want others to be able to use Apollo, this is not a "
 ## Future
 - Improve the search algorithm, more like Elasticsearch when data grows a lot?
 - Improve the web crawler - make more robust like [mercury parser](https://github.com/postlight/mercury-parser), maybe write my own
+- Speed up search
 
 
 ## Inspirations
