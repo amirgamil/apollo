@@ -121,7 +121,7 @@ Note since Apollo syncs from some personal data sources, you'll want to remove t
 4. Navigate to the `pkg/apollo/sources` in your preferred editor and replace the body of the `GetData` function with `return []schema.Data{}`
 5. Create a folder `data` in the outer directory
 6. Create a `.env` file and add `PASSWORD=<val>` where `<val>` is whatever password you want. This is necessary for adding or scraping the data, you'll want to "prove you're Amir" i.e. authenticate yourself and then you won't need to do this in the future. If this is not making sense, try adding some data on `apollo.amirbolous.com/add` and see what happens. 
-7. Go back to the outer directory (meanging you should see the files the way GitHub is displaying them right now) and run `go run cmd/main.go` in the terminal.
+7. Go back to the outer directory (meanging you should see the files the way GitHub is displaying them right now) and run `go run cmd/apollo.go` in the terminal.
 8. Navigate to `127.0.0.1:8993` on your browser
 9. It should be working! You can add data and index data from the database
 If you run into problems, open an issue or DM me on [Twitter](https://twitter.com/amirbolous)
