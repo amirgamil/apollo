@@ -12,6 +12,7 @@ import (
 	"github.com/amirgamil/apollo/pkg/apollo/backend"
 	"github.com/amirgamil/apollo/pkg/apollo/schema"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -85,6 +86,26 @@ func search(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func authenticatePassword(w http.ResponseWriter, r *http.Request) {
+	type Request struct {
+		Password string `json:"password"`
+	}
+	var request Request
+	json.NewDecoder(r.Body).Decode(&request)
+	if isValidPassword(request.Password) {
+		w.WriteHeader(http.StatusAccepted)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+}
+
+func isValidPassword(password string) bool {
+	err := godotenv.Load()
+	check(err)
+	truePass := os.Getenv("PASSWORD")
+	return truePass == password
+}
+
 //writes the current cache in memory to disk i.e. saves the database for persistent storage
 func writeRecordToDisk() error {
 	jsonFile, err := os.OpenFile(localRecordsPath, os.O_WRONLY|os.O_CREATE, 0755)
@@ -116,7 +137,7 @@ func Start() {
 	loadData()
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         "127.0.0.1:8993",
+		Addr:         "0.0.0.0:8993",
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,
 	}
@@ -125,6 +146,7 @@ func Start() {
 	r.Methods("POST").Path("/search").HandlerFunc(search)
 	r.Methods("POST").Path("/scrape").HandlerFunc(scrape)
 	r.Methods("POST").Path("/addData").HandlerFunc(addData)
+	r.Methods("POST").Path("/authenticate").HandlerFunc(authenticatePassword)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	r.PathPrefix("/").HandlerFunc(index)
 	log.Printf("Server listening on %s\n", srv.Addr)

@@ -11,10 +11,8 @@ import (
 func main() {
 	backend.InitializeFilesAndData()
 	// two days in miliseconds
-	// once every two days, takes all the records, pulls from the data sources,
-	ticker := time.NewTicker(2 * 24 * time.Hour)
-	// test on smaler interval for now
-	// ticker := time.NewTicker(9 * time.Hour)
+	// once every three days, takes all the records, pulls from the data sources,
+	ticker := time.NewTicker(3 * 24 * time.Hour)
 	done := make(chan bool)
 	go func() {
 		for {

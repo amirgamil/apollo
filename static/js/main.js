@@ -127,7 +127,10 @@ class SearchEngine extends Component {
         this.time = ""
         //add a little bit of delay before we search because too many network requests
         //will slow down retrieval of search results, especially as user is typing to their deired query
-        this.loadSearchResults = debounce(this.loadSearchResults.bind(this), 100);
+        //each time the user lifts up their finger from the keyboard, debounce will fire which will
+        //check if 500ms has elapsed, if it has, will query and load the search results,
+        //otherwise if it's called again, rinse and repeat
+        this.loadSearchResults = debounce(this.loadSearchResults.bind(this), 500);
         this.setSearchInput = this.setSearchInput.bind(this);
         this.handleKeydown = this.handleKeydown.bind(this);
         this.toggleSelected = this.toggleSelected.bind(this);
@@ -138,8 +141,8 @@ class SearchEngine extends Component {
         }
     }
 
-    loadSearchResults(value) {
-        this.searchData.fetch(value)
+    loadSearchResults() {
+        this.searchData.fetch(this.searchInput)
                         .then(() => {
                             this.loading = false;
                             this.render();
@@ -160,7 +163,7 @@ class SearchEngine extends Component {
         this.loading = true;
         this.render();
         //get search results
-        this.loadSearchResults(this.searchInput);
+        // this.loadSearchResults(this.searchInput);
     }
 
     styles() {
@@ -241,8 +244,9 @@ class SearchEngine extends Component {
         const time = this.searchData.time ? this.searchData.time.toFixed(2) : 0
         return html`<div class = "engine">
             <h1 class="engineTitle"><span class="blue">A</span><span class="red">p</span><span class="yellow">o</span><span class="blue">l</span><span class="green">l</span><span class="yellow">o</span></h1>
-            <input onkeydown=${this.handleKeydown} oninput=${this.handleInput} value=${this.searchInput} placeholder="Search my digital footprint"/>
-            <p class="time">${this.searchInput ? "About " + this.searchData.size + " results (" + time + "ms)" : null}</p>
+            <input onkeydown=${this.handleKeydown} oninput=${this.handleInput} onkeyup=${this.loadSearchResults} value=${this.searchInput} placeholder="Search my digital footprint"/>
+            <p class="time">${this.searchInput ? "About " + this.searchData.size + " results (" + time + "ms)" : html`<p>To navigate with your keyboard: <strong>Arrow keys</strong> move up and down results, <strong>Enter</strong> opens the result in detail, <strong>Escape</strong>
+            closes the detail view</p>`}</p>
             ${this.loading ? html`<p>loading...</p>` : this.searchResultsList.node} 
         </div>`
     }
@@ -263,7 +267,44 @@ class DigitalFootPrint extends Component {
         this.addData = this.addData.bind(this);
         this.scrapeData = this.scrapeData.bind(this);
         this.closeModal = this.closeModal.bind(this);
+        this.password = "";
+        this.isAuthenticated = window.localStorage.getItem("authenticated") === "true";
+        this.authenticatePassword = this.authenticatePassword.bind(this);
+        this.showAuthError = this.showAuthError.bind(this);
+        this.updatePassword = this.updatePassword.bind(this);
         this.bind(this.data);
+    }
+
+    authenticatePassword() {
+        fetch("/authenticate", {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+                "Content-Type": "application/json"
+            }, 
+            body: JSON.stringify({
+                "password": this.password
+            })
+        }).then(response => {
+            if (response.ok) {
+                window.localStorage.setItem("authenticated", "true");
+                this.modalText = "Hooray!"
+                this.showModal = true;
+                this.render();
+            } else {
+                window.localStorage.getItem("authenticated", "false");
+                return Promise.reject(response);
+            }
+        }).catch(e => {
+            this.showAuthError();
+            return;
+        })
+    }
+
+    showAuthError() {
+        this.modalText = "You're not Amir :("
+        this.showModal = true;
+        this.render();
     }
 
     closeModal() {
@@ -271,7 +312,17 @@ class DigitalFootPrint extends Component {
         this.render();
     }
 
+    updatePassword(evt) {
+        this.password = evt.target.value;
+        this.render();
+    }
+
+
     scrapeData(evt) {
+        if (!this.isAuthenticated) {
+            this.showAuthError();
+            return;
+        }
         this.showModal = true;
         this.modalText = "Hold on, doing some magic..."
         this.render();
@@ -307,6 +358,10 @@ class DigitalFootPrint extends Component {
     }
 
     addData() {
+        if (!this.isAuthenticated) {
+            this.showAuthError();
+            return;
+        }
         //create array from text tags
         let tags = this.getTagArrayFromString(this.data.get("tags"));
         fetch("/addData", {
@@ -354,6 +409,9 @@ class DigitalFootPrint extends Component {
                 <button class="action" onclick=${this.scrapeData}>Scrape</button> 
                 <button class="action" onclick=${this.addData}>Add</button>
             </div>
+            <h3>Are you Amir? Please prove yourself</h3>
+            <input oninput=${this.updatePassword} value=${this.password} type="password" placeholder="I am not :(" />
+            <button class="action" onclick=${this.authenticatePassword}>Prove</button>
             ${this.showModal ? html`<div class = "modal"> 
                     <div class="modalContent">
                         <div class="windowBar">
@@ -370,7 +428,7 @@ class DigitalFootPrint extends Component {
     }
 }
 
-const about = html`<div>
+const about = html`<div class="colWrapper">
     <h1>About</h1>
     <p>Apollo is an attempt at making something that has felt impersoal for the longest time, personal again. 
         
@@ -471,7 +529,7 @@ class App extends Component {
                     }
                 }}
             </div>
-            <footer>Built with <a href="https://github.com/amirgamil/poseidon">Poseidon</a> by <a href="https://amirbolous.com/">Amir</a></footer>
+            <footer>Built with <a href="https://github.com/amirgamil/poseidon">Poseidon</a> by <a href="https://amirbolous.com/">Amir</a> and <a href="https://github.com/amirgamil/poseidon">open source</a> on GitHub</footer>
         </main>` 
     }
 }

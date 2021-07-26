@@ -4,6 +4,7 @@
     <img style="height:400px" src="./docs/apollo.png" alt="apollo demo">
 </div>
 
+
 ## Contents
 [Background](#background)  
 [Thesis](#thesis)  
@@ -32,7 +33,7 @@ Apollo is a search engine and web crawler to digest **your digital footprint**. 
 
 Apollo is not necessarly built for raw discovery (although it certainly matches rediscovery), it's built for knowledge compression and transformation - that is looking up things that you've previously deemed to be cool
 
-## Thesis
+## Design
 The first thing you might notice is that the design is reminiscent of the old digital computer age, back in the Unix days. This is intentional for many reasons. In addition to paying homage to the greats of the past, this design makes me feel like I'm searching through something that is authentically my own. When I search for stuff, I genuinely feel like I'm **travelling through the past**.
 
 ## Architecture
@@ -114,21 +115,22 @@ Although I built Apollo first and foremost for myself, I also wanted other peopl
 Note since Apollo syncs from some personal data sources, you'll want to remove them, add your own, or build stuff on top of them. Otherwise the terminal wil complain if you attempt to run it, so:
 4. Navigate to the `pkg/apollo/sources` in your preferred editor and replace the body of the `GetData` function with `return []schema.Data{}`
 5. Create a folder `data` in the outer directory
-6. Go back to the outer directory (meanging you should see the files the way GitHub is displaying them right now) and run `go run cmd/main.go` in the terminal.
-7. Navigate to `127.0.0.1:8993` on your browser
-8. It should be working! You can add data and index data from the database
+6. Create a `.env` file and add `PASSWORD=<val>` where `<val>` is whatever password you want. This is necessary for adding or scraping the data, you'll want to "prove you're Amir" i.e. authenticate yourself and then you won't need to do this in the future. If this is not making sense, try adding some data on `apollo.amirbolous.com/add` and see what happens. 
+7. Go back to the outer directory (meanging you should see the files the way GitHub is displaying them right now) and run `go run cmd/main.go` in the terminal.
+8. Navigate to `127.0.0.1:8993` on your browser
+9. It should be working! You can add data and index data from the database
 If you run into problems, open an issue or DM me on [Twitter](https://twitter.com/amirbolous)
 
 As a side note, although I want others to be able to use Apollo, this is not a "commercial product" so feel free to open a feature request if you'd like one but it's unlikely I will get to it unless it becomes something I personally want to use.
 
 ## Notes 
 - The inverted index is re-generated once every n number of days (currently for n = 3)
-- Since this is not a commercial product, I will not be running your *version of this* (if you find it useful) on my server. However, althought I designed this, first and foremost for myself, I want other people to be able to use if this is something that's useful, refer to [How can I use this](#)
+- Since this is not a commercial product, I will not be running your *version of this* (if you find it useful) on my server. However, althought I designed this, first and foremost for myself, I want other people to be able to use if this is something that's useful, refer to [How can I use this](#shut-up-how-can-i-use-it)
 - I had the choice between using Go's `gob` package for the database/inverted index and `JSON`. The `gob` package is definitely faster however it's only native in Go so I decided to go with `JSON` to make the data available in the future for potentially any non-Go integrations and be able to switch the infrastructure completely if I want to etc. 
 - I use a ported version of the Go snowball algorithm for my stemmer. Although I would have like to build my own stemmer, implementing a robust one (which is what I wanted) was not the focus of the project. Since the algorithm for a stemmer does not need to be maintined like other types of software, I decided to use one out of the box. If I write my own in the future, I'll swap it out.
 
 ## Future
-- Improve the search algorithm, change Elasticsearch when data grows a lot?
+- Improve the search algorithm, more like Elasticsearch when data grows a lot?
 - Improve the web crawler - make more robust like [mercury parser](https://github.com/postlight/mercury-parser), maybe write my own
 
 

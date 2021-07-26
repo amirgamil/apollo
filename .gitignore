@@ -3,3 +3,4 @@ static/CNAME
 *.json
 data/
 kindle/
+.env
