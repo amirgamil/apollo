@@ -379,7 +379,9 @@ class DigitalFootPrint extends Component {
         }).then(response => {
             if (response.ok) {
                 //TODO: change to actually display
-                console.log("success!")
+                this.showModal = true;
+                this.modalText = "Success!"
+                this.render();
             } else {
                 Promise.reject(response)
             }

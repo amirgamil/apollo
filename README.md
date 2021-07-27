@@ -13,7 +13,7 @@ https://user-images.githubusercontent.com/7995105/126933240-b8176047-7cc4-4b22-9
 ## Contents
 [Background](#background)  
 [Thesis](#thesis)  
-[Design](#design)
+[Design](#design)  
 [Architecture](#architecture)  
 [Data Schema](#data-schema)  
 [Workflows](#workflows)  
