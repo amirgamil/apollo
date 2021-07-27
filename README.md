@@ -120,11 +120,14 @@ Although I built Apollo first and foremost for myself, I also wanted other peopl
 Note since Apollo syncs from some personal data sources, you'll want to remove them, add your own, or build stuff on top of them. Otherwise the terminal wil complain if you attempt to run it, so:
 4. Navigate to the `pkg/apollo/sources` in your preferred editor and replace the body of the `GetData` function with `return make(map[string]schema.Data)` 
 5. Create a folder `data` in the outer directory
-6. Create a `.env` file and add `PASSWORD=<val>` where `<val>` is whatever password you want. This is necessary for adding or scraping the data, you'll want to "prove you're Amir" i.e. authenticate yourself and then you won't need to do this in the future. If this is not making sense, try adding some data on `apollo.amirbolous.com/add` and see what happens. 
+6. Create a `.env` file in the outermost directory (i.e. in the same directory as the `README.md`) and add `PASSWORD=<val>` where `<val>` is whatever password you want. This is necessary for adding or scraping the data, you'll want to "prove you're Amir" i.e. authenticate yourself and then you won't need to do this in the future. If this is not making sense, try adding some data on `apollo.amirbolous.com/add` and see what happens. 
 7. Go back to the outer directory (meanging you should see the files the way GitHub is displaying them right now) and run `go run cmd/apollo.go` in the terminal.
 8. Navigate to `127.0.0.1:8993` on your browser
 9. It should be working! You can add data and index data from the database
 If you run into problems, open an issue or DM me on [Twitter](https://twitter.com/amirbolous)
+### A little more information on the `Add Data` section
+- In order to add data, you'll first need to authenticate yourself - enter your password once in the "Please prove you'r Amir" and if you see a `Hooray!` popup then that means you were authenticated successfully. You only need to do this once since we use `localStorage` to save whether you've been authenticated once or not.
+- In order to `scrape` a website, you'll want to paste a link in the link textbox. The web crawler works reliably *most of the time* if you're dealing with written content on a web page or a YouTube video. We use a Go ported version of [readability](https://github.com/mozilla/readability) to scrape the main contents from a page if it's written content and [youtube-dl](https://ytdl-org.github.io/youtube-dl/index.html) to get the transcript of a video. In the future, I'd like to make this web crawler more robust, but it works well enough most of the time for now.
 
 As a side note, although I want others to be able to use Apollo, this is not a "commercial product" so feel free to open a feature request if you'd like one but it's unlikely I will get to it unless it becomes something I personally want to use.
 
