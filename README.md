@@ -13,7 +13,7 @@ https://user-images.githubusercontent.com/7995105/126933240-b8176047-7cc4-4b22-9
 ## Contents
 [Background](#background)  
 [Thesis](#thesis)  
-[Design](#design)  
+[Design](#design)
 [Architecture](#architecture)  
 [Data Schema](#data-schema)  
 [Workflows](#workflows)  
@@ -115,10 +115,10 @@ I also personally store my Kindle highlights as a JSON file - I use [read.amazon
 ## Shut up, how can I use it?
 Although I built Apollo first and foremost for myself, I also wanted other people to be able to use if they found it valuable. To use Apollo locally
 1. Clone the repo: `git clone ....`
-2. Make sure you have `Go` installed and `youtube-dl` which is how we download the subtitles of a video. You can [this](https://ostechnix.com/youtube-dl-tutorial-with-examples-for-beginners/) to install it.
+2. Make sure you have `Go` installed and `youtube-dl` which is how we download the subtitles of a video. You can use [this](https://ostechnix.com/youtube-dl-tutorial-with-examples-for-beginners/) to install it.
 3. Navigate to the root directory of the project: `cd apollo` . 
 Note since Apollo syncs from some personal data sources, you'll want to remove them, add your own, or build stuff on top of them. Otherwise the terminal wil complain if you attempt to run it, so:
-4. Navigate to the `pkg/apollo/sources` in your preferred editor and replace the body of the `GetData` function with `return []schema.Data{}`
+4. Navigate to the `pkg/apollo/sources` in your preferred editor and replace the body of the `GetData` function with `return make(map[string]schema.Data)` 
 5. Create a folder `data` in the outer directory
 6. Create a `.env` file and add `PASSWORD=<val>` where `<val>` is whatever password you want. This is necessary for adding or scraping the data, you'll want to "prove you're Amir" i.e. authenticate yourself and then you won't need to do this in the future. If this is not making sense, try adding some data on `apollo.amirbolous.com/add` and see what happens. 
 7. Go back to the outer directory (meanging you should see the files the way GitHub is displaying them right now) and run `go run cmd/apollo.go` in the terminal.
