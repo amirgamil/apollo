@@ -71,7 +71,7 @@ type Data struct {
 ```go
 //smallest unit of data that we store in the database
 //this will store each "item" in our search engine with all of the necessary information
-//for the interverted index
+//for the inverted index
 type Record struct {
 	//unique identifier
 	ID string `json:"id"`
@@ -130,7 +130,7 @@ As a side note, although I want others to be able to use Apollo, this is not a "
 
 ## Notes 
 - The inverted index is re-generated once every n number of days (currently for n = 3)
-- Since this is not a commercial product, I will not be running your *version of this* (if you find it useful) on my server. However, althought I designed this, first and foremost for myself, I want other people to be able to use if this is something that's useful, refer to [How can I use this](#shut-up-how-can-i-use-it)
+- Since this is not a commercial product, I will not be running your *version of this* (if you find it useful) on my server. However, although I designed this, first and foremost for myself, I want other people to be able to use if this is something that's useful, refer to [How can I use this](#shut-up-how-can-i-use-it)
 - I had the choice between using Go's `gob` package for the database/inverted index and `JSON`. The `gob` package is definitely faster however it's only native in Go so I decided to go with `JSON` to make the data available in the future for potentially any non-Go integrations and be able to switch the infrastructure completely if I want to etc. 
 - I use a ported version of the Go snowball algorithm for my stemmer. Although I would have like to build my own stemmer, implementing a robust one (which is what I wanted) was not the focus of the project. Since the algorithm for a stemmer does not need to be maintined like other types of software, I decided to use one out of the box. If I write my own in the future, I'll swap it out.
 
