@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+	// sources.ReadXMLFile()
 	backend.InitializeFilesAndData()
 	// two days in miliseconds
 	// once every three days, takes all the records, pulls from the data sources,

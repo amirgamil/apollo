@@ -2,7 +2,6 @@ package sources
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -37,8 +36,6 @@ const kindlePath = "./data/kindle.json"
 //where new books will be places
 const newBooksPath = "./kindle/"
 
-//How I use this?
-
 //Kindle does not directly provide a way to get highlights except via https://read.amazon.com/
 //I use a readwise extension to download my highlights into JSON https://readwise.io/bookcision
 //I then put this json file in a directory called kindle, when it comes time to sync data, i.e. recompute the invertedIndex
@@ -50,11 +47,11 @@ const newBooksPath = "./kindle/"
 
 func getKindle() map[string]schema.Data {
 	//ensure our kindle database exists
-	ensureKindleFileExists()
+	ensureFileExists(kindlePath)
 	//load our kindle file
 	kindleGlobal = make(map[string]Book)
 	loadKindle()
-	//first check for new files in k
+	//first check for new files in kindle folder
 	newBooks, err := checkForNewBooks()
 	if err != nil {
 		return make(map[string]schema.Data)
@@ -66,20 +63,10 @@ func getKindle() map[string]schema.Data {
 	} else {
 		//if we successfully write the books to disk, we delete all of the files since
 		//we've stored them and no longer need them
-		deleteBookFiles()
+		deleteFiles(newBooksPath, newBooksPath)
 	}
 	bookData := convertBooksToData()
 	return bookData
-}
-
-func deleteBookFiles() {
-	files := getFilesInKindle()
-	for _, f := range files {
-		err := os.Remove(newBooksPath + f.Name())
-		if err != nil {
-			log.Println("Error deleting file: ", f.Name())
-		}
-	}
 }
 
 func convertBooksToData() map[string]schema.Data {
@@ -122,20 +109,6 @@ func addNewBooksToDb(books []Book) {
 	}
 }
 
-func ensureKindleFileExists() {
-	jsonFile, err := os.Open(kindlePath)
-	if err != nil {
-		file, err := os.Create(kindlePath)
-		if err != nil {
-			log.Println("Error creating the original kindle database: ", err)
-			return
-		}
-		file.Close()
-	} else {
-		defer jsonFile.Close()
-	}
-}
-
 func loadKindle() {
 	file, err := os.Open(kindlePath)
 	if err != nil {
@@ -144,19 +117,8 @@ func loadKindle() {
 	jsoniter.NewDecoder(file).Decode(&kindleGlobal)
 }
 
-func getFilesInKindle() []os.FileInfo {
-	files, err := ioutil.ReadDir("./kindle")
-	if err != nil {
-		err := os.Mkdir("kindle", 0755)
-		if err != nil {
-			log.Println("Error creating the kindle directory!")
-		}
-	}
-	return files
-}
-
 func checkForNewBooks() ([]Book, error) {
-	files := getFilesInKindle()
+	files := getFilesInFolder(newBooksPath, "kindle")
 	books := make([]Book, 0)
 	for _, f := range files {
 		if f.Name() == ".DS_Store" {

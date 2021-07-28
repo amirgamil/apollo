@@ -20,7 +20,6 @@ type List struct {
 	Rule string `json:"rule"`
 }
 
-//TODO: add some intelligent code to not scrape if seen before, otherwise server costs to the moon lol
 func getZeus() map[string]schema.Data {
 	//set of paths to ignore
 	ignore := map[string]bool{"podcasts": true, "startups": true}

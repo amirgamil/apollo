@@ -141,8 +141,10 @@ class SearchEngine extends Component {
         }
     }
 
-    loadSearchResults() {
-        console.log("hello");
+    loadSearchResults(evt) {
+        if (evt.key === "ArrowDown" || evt.key === "ArrowUp" || evt.key === "Enter" || evt.key === "Escape") {
+            return ;
+        } 
         this.searchData.fetch(this.searchInput)
                         .then(() => {
                             this.loading = false;
@@ -230,16 +232,13 @@ class SearchEngine extends Component {
         if (evt.key === "ArrowDown" || evt.key === "ArrowUp") {
             //change the selected attribute
             evt.preventDefault();
-            evt.stopPropagation();
             this.toggleSelected(evt.key);
         } else if (evt.key === "Enter") {
             evt.preventDefault();
-            evt.stopPropagation();
             this.searchResultsList.nodes[this.selected].displayDetails = true;
             this.searchResultsList.nodes[this.selected].render();
         } else if (evt.key === "Escape") {
             evt.preventDefault();
-            evt.stopPropagation();
             this.searchResultsList.nodes[this.selected].displayDetails = false;
             this.searchResultsList.nodes[this.selected].render();
         }
