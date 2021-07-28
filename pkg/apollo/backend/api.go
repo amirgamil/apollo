@@ -108,7 +108,8 @@ func countFrequencyTokens(tokens []string) map[string]int {
 
 //helper method which writes the current the inverted index to disk
 func writeIndexToDisk() {
-	jsonFile, err := os.OpenFile(invertedIndexPath, os.O_WRONLY|os.O_CREATE, 0755)
+	//flags we pass here are important, need to replace the entire file
+	jsonFile, err := os.OpenFile(invertedIndexPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		fmt.Println("Error trying to write the new inverted index to disk")
 	}
@@ -136,10 +137,13 @@ func RefreshInvertedIndex() {
 	globalInvertedIndex = make(map[string][]string)
 	//Order is important here
 	//Step 1: Write local stored records to the inverted index
-	flushSavedRecordsIntoInvertedIndex()
-	//Step 2a: resync data from data sources i.e. get all data again
+	flushSavedRecordsIntoInvertedIndex(localRecordList)
+	//Step 2: Write "old" data from data sources to the inverted index
+	//"old" = we've previously done work to retrieve and process
+	flushSavedRecordsIntoInvertedIndex(sourcesRecordList)
+	//Step 3a: resync data from data sources i.e. get all data again
 	sourceData := sources.GetData(sourcesRecordList)
-	//Step 2b: flush data from data sources into inverted index, note we DO NOT save these records locally since they are stored
+	//Step 3b: flush new data from data sources into inverted index, note we DO NOT save these records locally since they are stored
 	//in the origin of where we pulled them from. Since we get ALL of the data from our data sources each time this method is called, this
 	//prevents creating additional copies in our inverted index
 	flushDataSourcesIntoInvertedIndex(sourceData)
@@ -157,9 +161,9 @@ func loadGlobals() {
 }
 
 //takes all of the saved records and puts them in our inverted index
-func flushSavedRecordsIntoInvertedIndex() {
+func flushSavedRecordsIntoInvertedIndex(recordList map[string]schema.Record) {
 	//we already have token frequency data precomputed and saved, so just add it to inverted index directly
-	for key, record := range localRecordList {
+	for key, record := range recordList {
 		writeTokenFrequenciesToInvertedIndex(record.TokenFrequency, key)
 	}
 }
