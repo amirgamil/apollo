@@ -25,6 +25,9 @@ class SearchResults extends CollectionStoreOf(Data) {
                 {
                     method: "POST",
                     mode: "no-cors",
+                    headers: {
+                        "Accept-Encoding": "gzip, deflate"
+                    },
                     body: JSON.stringify()
                 })
                .then(response => {

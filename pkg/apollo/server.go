@@ -1,12 +1,14 @@
 package apollo
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/amirgamil/apollo/pkg/apollo/backend"
@@ -24,12 +26,6 @@ func check(e error) {
 
 //records which are stored locally, which have been added via Apollo directly
 const localRecordsPath = "./data/local.json"
-
-//hold rows of data that have yet to be flushed in the inverted index
-
-//TODO: will need to add some intelligent, heuristic based methods when syncing with other modules to check if it's a link that it gets scraped
-
-var data []schema.Record
 
 func index(w http.ResponseWriter, r *http.Request) {
 	indexFile, err := os.Open("./static/index.html")
@@ -60,29 +56,30 @@ func addData(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 	} else {
-		//get the record from the data
-		//note all records stored locally on apollo start with prefix lc
-		record := backend.GetRecordFromData(newData, fmt.Sprintf("lc%d", len(data)))
-		data = append(data, record)
-		err = writeRecordToDisk()
-		if err != nil {
-			w.WriteHeader(http.StatusExpectationFailed)
-		} else {
-			w.WriteHeader(http.StatusAccepted)
-		}
+		backend.AddNewEntryToLocalData(newData)
+		w.WriteHeader(http.StatusAccepted)
 	}
 }
 
 func search(w http.ResponseWriter, r *http.Request) {
 	searchQuery := r.FormValue("q")
-	w.Header().Set("Content-Type", "application/json")
+	//add support here for older browsers?
+	if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip, deflate") {
+		return
+	}
+	w.Header().Set("Content-Encoding", "gzip")
+	// w.Header().Set("Content-Type", "application/json")
 	fmt.Println(searchQuery)
+	//TODO: add logic for OR
 	results, err := backend.Search(searchQuery, "AND")
+
 	if err != nil {
 		w.WriteHeader(http.StatusNoContent)
 	} else {
 		// fmt.Println("results : ", results)
-		jsoniter.NewEncoder(w).Encode(results)
+		gz := gzip.NewWriter(w)
+		defer gz.Close()
+		jsoniter.NewEncoder(gz).Encode(results)
 	}
 }
 
@@ -106,35 +103,8 @@ func isValidPassword(password string) bool {
 	return truePass == password
 }
 
-//writes the current cache in memory to disk i.e. saves the database for persistent storage
-func writeRecordToDisk() error {
-	jsonFile, err := os.OpenFile(localRecordsPath, os.O_WRONLY|os.O_CREATE, 0755)
-	defer jsonFile.Close()
-	//error may occur when reading from an empty file for the first time
-	if err != nil {
-		return err
-	}
-	err = jsoniter.NewEncoder(jsonFile).Encode(data)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func loadData() {
-	file, err := os.Open(localRecordsPath)
-	if err != nil {
-		fmt.Println("Error loading the database with new data!")
-	}
-	err = jsoniter.NewDecoder(file).Decode(&data)
-	if err != nil {
-		fmt.Println("Error parsing data into JSON")
-	}
-}
-
 func Start() {
 	r := mux.NewRouter()
-	loadData()
 	srv := &http.Server{
 		Handler:      r,
 		Addr:         "0.0.0.0:8993",

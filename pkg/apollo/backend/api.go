@@ -120,6 +120,7 @@ func writeIndexToDisk() {
 //helper method which writes the current the record list to disk
 //parameters determine which record list we write
 func writeRecordListToDisk(path string, list map[string]schema.Record) {
+	//flags we pass here are important, need to replace the entire file
 	jsonFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0755)
 	if err != nil {
 		fmt.Println("Error trying to write the new inverted index to disk")
@@ -215,4 +216,11 @@ func writeTokenFrequenciesToInvertedIndex(frequencyOfTokens map[string]int, uniq
 			globalInvertedIndex[key] = []string{uniqueID}
 		}
 	}
+}
+
+func AddNewEntryToLocalData(data schema.Data) {
+	key := fmt.Sprintf("lc%d", len(localRecordList))
+	record := GetRecordFromData(data, key)
+	localRecordList[key] = record
+	writeRecordListToDisk(localRecordsPath, localRecordList)
 }
