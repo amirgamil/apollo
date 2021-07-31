@@ -1,0 +1,8 @@
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+  <script/>
+  <ShortName>Apollo</ShortName>
+  <Description>A Unix-style search engine and web crawler for your digital footprint</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <!-- <Image width="32" height="32" type="image/x-icon">[https://example.com/favicon.ico]</Image> -->
+  <Url type="text/html" method="get" template="https://apollo.amirbolous.com/search?q={searchTerms}"/>
+</OpenSearchDescription>

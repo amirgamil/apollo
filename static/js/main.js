@@ -19,15 +19,16 @@ const highlightContent = (text, query) => {
     return text.replace(regex, `<span class="highlighted">${query[0]}</span>`);
 }
 
+
 class SearchResults extends CollectionStoreOf(Data) {
     fetch(query) {
         return fetch("/search?q=" + encodeURIComponent(query), 
                 {
                     method: "POST",
                     mode: "no-cors",
-                    headers: {
-                        "Accept-Encoding": "gzip, deflate"
-                    },
+                    // headers: {
+                    //     "Accept-Encoding": "gzip, deflate"
+                    // },
                     body: JSON.stringify()
                 })
                .then(response => {
@@ -49,7 +50,8 @@ class SearchResults extends CollectionStoreOf(Data) {
                     } else {
                         this.setStore([]);
                     }
-               }).catch(ex => {
+               })
+               .catch(ex => {
                    console.log("Exception occurred trying to fetch the result of a request: ", ex);
                })
     }
@@ -62,16 +64,23 @@ class Result extends Component {
         this.displayDetails = false;
         this.loadPreview = this.loadPreview.bind(this);
         this.closeModal = this.closeModal.bind(this);
-    }
-
-    styles() {
-        return css`
-        `
+        this.bind(data);
     }
 
     loadPreview() {
-        this.displayDetails = true;
-        this.render();
+        //fetch the full text
+        fetch("/getRecordDetail?q=" + this.data.get("title"), {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify()
+        }).then(data => data.json())
+          .then(res => {
+              this.displayDetails = true;
+              //add highlighting
+              this.data.update({"fullContent": res});
+          }).catch(ex => {
+              console.log("Error fetching details of item: ", ex);
+          })
     }
 
     closeModal(evt) {
@@ -82,10 +91,11 @@ class Result extends Component {
     }
 
 
-    create({title, link, content, selected}) {
+    create({title, link, content, selected, fullContent}) {
+        const contentToDisplay = content + "..."
         return html`<div class="result colWrapper ${selected ? 'hoverShow' : ''}" onclick=${this.loadPreview}>
             <a onclick=${(evt) => evt.stopPropagation()} href=${link}>${title}</a>
-            <p>${content.slice(0, 100) + "..."}</p>
+            <p innerHTML = ${contentToDisplay}></p>
             ${this.displayDetails ? html`<div class = "modal"> 
                     <div class="modalContent">
                         <div class="windowBar">
@@ -98,7 +108,7 @@ class Result extends Component {
                                 <h2>${title}</h2>
                             </div>
                             <p><a href=${link}>Source</a></p>
-                            <p innerHTML = ${content}></p>
+                            <p innerHTML = ${fullContent}></p>
                         </div>
                     </div>
                 </div>` : null}
@@ -144,6 +154,7 @@ class SearchEngine extends Component {
         }
     }
 
+    //TODO: add pagination into API to return e.g. 20 results and load more for speed
     loadSearchResults(evt) {
         if (evt.key === "ArrowDown" || evt.key === "ArrowUp" || evt.key === "Enter" || evt.key === "Escape") {
             return ;
@@ -202,13 +213,11 @@ class SearchEngine extends Component {
                     window.scrollBy(0, 100);
                     this.searchResultsList.nodes[this.selected - 1].data.update({"selected": false});
                     this.searchResultsList.nodes[this.selected].data.update({"selected": true});
-                    this.searchResultsList.nodes[this.selected - 1].render();
                 } else {
                     window.scrollTo(0, 0);
                     this.selected = 0;
                     this.searchResultsList.nodes[this.selected].data.update({"selected": true});
                     this.searchResultsList.nodes[listSize - 1].data.update({"selected": false});
-                    this.searchResultsList.nodes[listSize - 1].render();
                 }
                 break;
             case "ArrowUp":
@@ -217,13 +226,11 @@ class SearchEngine extends Component {
                     window.scrollBy(0, -100);
                     this.searchResultsList.nodes[this.selected + 1].data.update({"selected": false});
                     this.searchResultsList.nodes[this.selected].data.update({"selected": true});
-                    this.searchResultsList.nodes[this.selected + 1].render();
                 } else {
                     window.scrollBy(0, document.body.scrollHeight);
                     this.selected = listSize - 1;
                     this.searchResultsList.nodes[0].data.update({"selected": false});
                     this.searchResultsList.nodes[this.selected].data.update({"selected": true});
-                    this.searchResultsList.nodes[0].render();
                 }
             
         }
@@ -238,8 +245,7 @@ class SearchEngine extends Component {
             this.toggleSelected(evt.key);
         } else if (evt.key === "Enter") {
             evt.preventDefault();
-            this.searchResultsList.nodes[this.selected].displayDetails = true;
-            this.searchResultsList.nodes[this.selected].render();
+            this.searchResultsList.nodes[this.selected].loadPreview();
         } else if (evt.key === "Escape") {
             evt.preventDefault();
             this.searchResultsList.nodes[this.selected].displayDetails = false;
@@ -405,6 +411,7 @@ class DigitalFootPrint extends Component {
     }
 
     create({title, link, content, tags}) {
+        console.log(content);
         return html`<div class="colWrapper">
             <h1>Add some data</h1>
             <input oninput=${this.handleTitle} value=${title} placeholder="Title"/> 

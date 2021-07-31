@@ -170,6 +170,7 @@ func flushSavedRecordsIntoInvertedIndex(recordList map[string]schema.Record) {
 }
 
 func GetRecordFromData(currData schema.Data, uniqueID string) schema.Record {
+
 	//tokenize, stem, and filter
 	tokens := Analyze(currData.Content)
 

@@ -2,8 +2,11 @@ package backend
 
 import (
 	"errors"
+	"fmt"
 	"math"
+	"regexp"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/amirgamil/apollo/pkg/apollo/schema"
@@ -12,7 +15,7 @@ import (
 //TODO: should search titles too (and put high probability mass on those tokens)
 
 //given a query string a search type (AND / OR ) returns a list of matches ordered by relevance
-func Search(query string, searchType string) (schema.Payload, error) {
+func Search(query string, searchType string, currentSearchResults map[string]string) (schema.Payload, error) {
 	//1. Gets results of a query
 	//keep it in a Go map that acts as a set
 	startTime := time.Now()
@@ -64,10 +67,10 @@ func Search(query string, searchType string) (schema.Payload, error) {
 
 	//4. Sory by relevance - assign a score to each record that matches how relevant it is
 	//Use the inverse document frequency
-	records := rank(results, queries)
+	records := rank(results, queries, currentSearchResults)
 	//convert searched time to miliseconds
 	time := int64(time.Now().Sub(startTime))
-	return schema.Payload{Time: time, Data: records, Query: queries}, nil
+	return schema.Payload{Time: time, Data: records, Query: queries, Length: len(records)}, nil
 
 }
 
@@ -89,15 +92,18 @@ func idf(token string) float64 {
 //document-level statistic that scores how relevant a document (record in our case) matches our query
 //then multiplty by the number of times the token gets mentioned in the token
 //returns an ordered list of records from most to least relevant
-func rank(results map[string]bool, queries []string) []schema.Record {
+func rank(results map[string]bool, queries []string, currentSearchResults map[string]string) []schema.SearchResult {
 	type recordRank struct {
-		record schema.Record
+		result schema.SearchResult
 		score  float64
 	}
 	//defining a fixed-size array is faster and more memory efficieny
-	rankedResults := make([]schema.Record, len(results))
+	rankedResults := make([]schema.SearchResult, len(results))
 	unsortedResults := make([]recordRank, len(results))
 	i := 0
+	queriesChained := strings.Join(queries, " ")
+	fmt.Println(queriesChained)
+	regex, _ := regexp.Compile(queriesChained)
 	for recordID, _ := range results {
 		record := getRecordFromID(recordID)
 		score := float64(0)
@@ -105,7 +111,11 @@ func rank(results map[string]bool, queries []string) []schema.Record {
 			idfVal := idf(token)
 			score += idfVal * float64(record.TokenFrequency[token])
 		}
-		unsortedResults[i] = recordRank{record: record, score: score}
+		content := getSurroundingText(regex, record.Content)
+		//add regex highlighted of the full content which is readily available when a user clicks on an item to view details
+		//this way, we don't need to every single record's contents and can speed up searches
+		currentSearchResults[record.Title] = regex.ReplaceAllString(record.Content, fmt.Sprintf(`<span class="highlighted">%s</span>`, queriesChained))
+		unsortedResults[i] = recordRank{result: schema.SearchResult{Title: record.Title, Link: record.Link, Content: content}, score: score}
 		i += 1
 	}
 	//sort by highest order score to lowest
@@ -116,8 +126,38 @@ func rank(results map[string]bool, queries []string) []schema.Record {
 	i = 0
 	//put sorted records into needed format and return
 	for _, val := range unsortedResults {
-		rankedResults[i] = val.record
+		rankedResults[i] = val.result
 		i += 1
 	}
 	return rankedResults
+}
+
+//helper method to get small window of matching result
+//don't send the full text back to the client cause this is too slow
+func getSurroundingText(regexp *regexp.Regexp, content string) string {
+	indices := regexp.FindStringIndex(strings.ToLower(content))
+	//TODO? make greedy? match different variations
+	//if we find no match, then we've matched a token that's stem is not included
+	//in the actual text, so just return the first section
+	if indices == nil {
+		if len(content) > 150 {
+			return content[:150]
+		}
+		return content
+	}
+	//want to get a small window with the highlighted content 100 characters on each side
+	start := indices[0] - 15
+	end := indices[1] + 100
+	if start < 0 && end >= len(content) {
+		//if the entire content is smaller than the window, then just display all of the content
+		start = 0
+		end = len(content)
+	} else if start < 0 {
+		//if the match is nearer to the front, shift the window "to the right" and display more on tailend
+		start = 0
+	} else if end >= len(content) {
+		//if the match is nearer to the end, shift the window "to the left" and display more on the front
+		end = len(content)
+	}
+	return content[start:end]
 }

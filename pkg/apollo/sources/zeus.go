@@ -35,13 +35,15 @@ func getZeus() map[string]schema.Data {
 		if !toIgnore {
 			//in zeus, new data is appended to the front of the list, so we need to iterate from the back of the array to the front
 			//otherwise we not know whether an element is new and needed to be saved in apollo or not
+			i := 0
 			for index := len(list.Data) - 1; index >= 0; index -= 1 {
-				data := list.Data[index]
+				//have to set our own "bakcwards index" to maintain correct order
+				data := list.Data[i]
 				//check if this is an item we've already scrapped / retreieved data for, in which case ignore to prevent repeated work
-				keyInMap := fmt.Sprintf("srzs%s%d", list.Key, index)
+				keyInMap := fmt.Sprintf("srzs%s%d", list.Key, i)
 				_, isInMap := sources[keyInMap]
 				if !isInMap {
-					newData, err := getDataFromList(data, list.Key, index)
+					newData, err := getDataFromList(data, list.Key, i)
 					if err != nil {
 						log.Println(err)
 					} else {
@@ -51,6 +53,7 @@ func getZeus() map[string]schema.Data {
 					log.Println("avoiding")
 					//TODO: add some aditional logic to handle if elements change, should update, besides deleting everything
 				}
+				i += 1
 			}
 		}
 	}

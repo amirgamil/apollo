@@ -16,6 +16,12 @@ type Record struct {
 	TokenFrequency map[string]int `json:"tokenFrequency"`
 }
 
+type SearchResult struct {
+	Title   string `json:"title"`
+	Link    string `json:"link"`
+	Content string `json:"content"`
+}
+
 //represents raw data that we will parse objects into before they have been transformed into records
 //and stored in our database
 type Data struct {
@@ -28,7 +34,8 @@ type Data struct {
 
 //how we send back the result of a search query to the client
 type Payload struct {
-	Time  int64    `json:"time"`
-	Data  []Record `json:"data"`
-	Query []string `json:"query"`
+	Time   int64          `json:"time"`
+	Length int            `json:"length"`
+	Query  []string       `json:"query"`
+	Data   []SearchResult `json:"data"`
 }
