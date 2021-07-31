@@ -25,7 +25,9 @@ func Scrape(link string) (Data, error) {
 	if err != nil {
 		return Data{}, err
 	}
-	return Data{Title: article.Title, Link: link, Content: article.TextContent, Tags: make([]string, 0)}, nil
+	regex, _ := regexp.Compile("(<[^>]+>)")
+	cleanContent := regex.ReplaceAllString(article.TextContent, "")
+	return Data{Title: article.Title, Link: link, Content: cleanContent, Tags: make([]string, 0)}, nil
 }
 
 func HandleYouTubeVideo(link string) (Data, error) {

@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"regexp"
 	"time"
 
 	"github.com/amirgamil/apollo/pkg/apollo/backend"
@@ -109,11 +108,7 @@ func getRecord(w http.ResponseWriter, r *http.Request) {
 	if len(currentSearchResults) == 0 || !inMap {
 		w.WriteHeader(http.StatusBadRequest)
 	} else {
-		//remove any HTML tags for safety and to prevent weird rendering since we use innerHTML on the frontend
-		//remove any HTML tags, or more specifically remove their identifiers so they don't parsed when we load the article
-		regex, _ := regexp.Compile("(<[^>]+>)")
-		cleanRecord := regex.ReplaceAllString(record, "")
-		jsoniter.NewEncoder(w).Encode(cleanRecord)
+		jsoniter.NewEncoder(w).Encode(record)
 	}
 
 }
