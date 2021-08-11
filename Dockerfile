@@ -6,6 +6,8 @@ COPY . .
 RUN go build -o apollo ./cmd/
 
 FROM alpine
+
+# Taken from https://github.com/wernight/docker-youtube-dl
 RUN apk add --no-cache ca-certificates curl dumb-init ffmpeg gnupg python3 libc6-compat
 RUN curl -Lo /usr/local/bin/youtube-dl https://yt-dl.org/downloads/latest/youtube-dl && \
     curl -Lo youtube-dl.sig https://yt-dl.org/downloads/latest/youtube-dl.sig && \
