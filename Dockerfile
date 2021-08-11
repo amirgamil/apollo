@@ -16,4 +16,9 @@ RUN curl -Lo /usr/local/bin/youtube-dl https://yt-dl.org/downloads/latest/youtub
     ln -s /usr/bin/python3 /usr/bin/python && \
     rm youtube-dl.sig && \
     apk del curl gnupg
+WORKDIR /etc/apollo
+RUN mkdir data
+COPY --from=builder /src/apollo /bin/apollo
+COPY --from=builder /src/static/ ./static/
+EXPOSE 8993
 ENTRYPOINT ["/bin/apollo"]
