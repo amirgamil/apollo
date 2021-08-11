@@ -127,8 +127,7 @@ func authenticatePassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func isValidPassword(password string) bool {
-	err := godotenv.Load()
-	check(err)
+	godotenv.Load()
 	truePass := os.Getenv("PASSWORD")
 	return truePass == password
 }
