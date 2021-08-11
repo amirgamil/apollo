@@ -1,0 +1,9 @@
+version: '3.6'
+
+services:
+  app:
+    build: .
+    environment: 
+      PASSWORD: my_password
+    ports:
+      - 8993:8993
