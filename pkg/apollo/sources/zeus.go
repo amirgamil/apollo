@@ -57,7 +57,6 @@ func getZeus() map[string]schema.Data {
 				}
 				keyID += 1
 			}
-			break
 		}
 	}
 	return dataToIndex
