@@ -97,6 +97,8 @@ func findEpisodeInRSSWithName(name string, rssFeed RSS) (EpisodeXML, error) {
 func addNewEpisodesToDb(episodes []schema.Data) {
 	regex, _ := regexp.Compile("[0-9]+")
 	for _, episode := range episodes {
+		//trim any leading or trailing spaces
+		episode.Title = strings.Trim(episode.Title, " ")
 		episodeNumber := regex.FindString(episode.Title)
 		keyInMap := fmt.Sprintf("srpd%s", episodeNumber)
 		podcastsGlobal[keyInMap] = episode

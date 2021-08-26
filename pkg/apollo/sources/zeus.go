@@ -22,7 +22,7 @@ type List struct {
 
 func getZeus() map[string]schema.Data {
 	//set of paths to ignore
-	ignore := map[string]bool{"podcasts": true, "startups": true}
+	ignore := map[string]bool{"podcasts": true, "startups": true, "directory": true}
 	cache := make(map[string]*List)
 	dataToIndex := make(map[string]schema.Data)
 	file, err := os.Open(zeusPath)
@@ -35,15 +35,17 @@ func getZeus() map[string]schema.Data {
 		if !toIgnore {
 			//in zeus, new data is appended to the front of the list, so we need to iterate from the back of the array to the front
 			//otherwise we not know whether an element is new and needed to be saved in apollo or not
-			i := 0
+			log.Println("HERE:\n", key, list.Data)
+			keyID := 0
 			for index := len(list.Data) - 1; index >= 0; index -= 1 {
 				//have to set our own "bakcwards index" to maintain correct order
-				data := list.Data[i]
+				data := list.Data[index]
 				//check if this is an item we've already scrapped / retreieved data for, in which case ignore to prevent repeated work
-				keyInMap := fmt.Sprintf("srzs%s%d", list.Key, i)
+				keyInMap := fmt.Sprintf("srzs%s%d", list.Key, keyID)
 				_, isInMap := sources[keyInMap]
 				if !isInMap {
-					newData, err := getDataFromList(data, list.Key, i)
+					//pass in our "true index"
+					newData, err := getDataFromList(data, list.Key, keyID)
 					if err != nil {
 						log.Println(err)
 					} else {
@@ -53,8 +55,9 @@ func getZeus() map[string]schema.Data {
 					log.Println("avoiding")
 					//TODO: add some aditional logic to handle if elements change, should update, besides deleting everything
 				}
-				i += 1
+				keyID += 1
 			}
+			break
 		}
 	}
 	return dataToIndex
@@ -82,7 +85,7 @@ func getDataFromList(listData string, listKey string, index int) (schema.Data, e
 			return schema.Data{}, err
 		}
 	} else {
-		log.Println("Scraping: ", listKey)
+		// log.Println("Scraping: ", listKey)
 		//otherwise, there's other content which we assume will (hopefully be indexable), may be adapted to be more intelligent
 		newItem = schema.Data{Title: fmt.Sprintf("%s %d", listKey, index), Link: "zeus.amirbolous.com/" + listKey, Content: body.Text(), Tags: make([]string, 0)}
 	}

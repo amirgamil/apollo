@@ -112,6 +112,7 @@ func rank(results map[string]bool, queries []string, currentSearchResults map[st
 			score += idfVal * float64(record.TokenFrequency[token])
 		}
 		content := getSurroundingText(regex, record.Content)
+		fmt.Println(strings.ReplaceAll(record.Title, " ", "!"))
 		//add regex highlighted of the full content which is readily available when a user clicks on an item to view details
 		//this way, we don't need to every single record's contents and can speed up searches
 		currentSearchResults[record.Title] = regex.ReplaceAllString(record.Content, fmt.Sprintf(`<span class="highlighted">%s</span>`, queriesChained))
