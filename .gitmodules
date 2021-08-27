@@ -1,0 +1,3 @@
+[submodule "ApolloNIA"]
+	path = ApolloNIA
+	url = https://github.com/dborowiec10/ApolloNIA.git

@@ -28,18 +28,35 @@ const localRecordsPath = "./data/local.json"
 //global used to quickly access details when searching
 var currentSearchResults map[string]string
 
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+}
+
+func setupResponse(w *http.ResponseWriter, req *http.Request) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+    (*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+    (*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+}
+
 func index(w http.ResponseWriter, r *http.Request) {
+	setupResponse(&w, r)
+	if (*r).Method == "OPTIONS" {
+		return
+	}
 	indexFile, err := os.Open("./static/index.html")
 	if err != nil {
 		io.WriteString(w, "error reading index")
 		return
 	}
 	defer indexFile.Close()
-
 	io.Copy(w, indexFile)
 }
 
 func scrape(w http.ResponseWriter, r *http.Request) {
+	setupResponse(&w, r)
+	if (*r).Method == "OPTIONS" {
+		return
+	}
 	linkToScraoe := r.FormValue("q")
 	w.Header().Set("Content-Type", "application/json")
 	result, err := schema.Scrape(linkToScraoe)
@@ -52,6 +69,10 @@ func scrape(w http.ResponseWriter, r *http.Request) {
 }
 
 func addData(w http.ResponseWriter, r *http.Request) {
+	setupResponse(&w, r)
+	if (*r).Method == "OPTIONS" {
+		return
+	}
 	var newData schema.Data
 	err := jsoniter.NewDecoder(r.Body).Decode(&newData)
 	if err != nil {
@@ -63,6 +84,10 @@ func addData(w http.ResponseWriter, r *http.Request) {
 }
 
 func search(w http.ResponseWriter, r *http.Request) {
+	setupResponse(&w, r)
+	if (*r).Method == "OPTIONS" {
+		return
+	}
 	searchQuery := r.FormValue("q")
 	//"erase" current result in preparation for new search
 	currentSearchResults = make(map[string]string)
@@ -114,6 +139,10 @@ func getRecord(w http.ResponseWriter, r *http.Request) {
 }
 
 func authenticatePassword(w http.ResponseWriter, r *http.Request) {
+	setupResponse(&w, r)
+	if (*r).Method == "OPTIONS" {
+		return
+	}
 	type Request struct {
 		Password string `json:"password"`
 	}
