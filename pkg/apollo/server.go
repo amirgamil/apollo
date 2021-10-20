@@ -12,8 +12,8 @@ import (
 	"github.com/amirgamil/apollo/pkg/apollo/backend"
 	"github.com/amirgamil/apollo/pkg/apollo/schema"
 	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/spf13/viper"
 )
 
 func check(e error) {
@@ -40,11 +40,11 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func scrape(w http.ResponseWriter, r *http.Request) {
-	linkToScraoe := r.FormValue("q")
+	linkToScrape := r.FormValue("q")
 	w.Header().Set("Content-Type", "application/json")
-	result, err := schema.Scrape(linkToScraoe)
+	result, err := schema.Scrape(linkToScrape)
 	if err != nil {
-		log.Fatal("Error trying to scrape a digital artifact!")
+		log.Println("Error trying to scrape " + linkToScrape)
 		w.WriteHeader(http.StatusExpectationFailed)
 	} else {
 		json.NewEncoder(w).Encode(result)
@@ -127,9 +127,14 @@ func authenticatePassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func isValidPassword(password string) bool {
-	err := godotenv.Load()
+	viper.AddConfigPath(".")
+	viper.SetConfigType("env")
+	viper.SetConfigName(".env")
+	viper.AutomaticEnv()
+
+	err := viper.ReadInConfig()
 	check(err)
-	truePass := os.Getenv("PASSWORD")
+	truePass := viper.Get("PASSWORD")
 	return truePass == password
 }
 

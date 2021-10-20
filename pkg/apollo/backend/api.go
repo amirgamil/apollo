@@ -2,8 +2,10 @@ package backend
 
 import (
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/amirgamil/apollo/pkg/apollo/schema"
 	"github.com/amirgamil/apollo/pkg/apollo/sources"
@@ -39,6 +41,12 @@ const localRecordsPath = "./data/local.json"
 const sourcesPath = "./data/sources.json"
 
 func createFile(path string) {
+	basePath := filepath.Dir(path)
+	if _, err := os.Stat(basePath); os.IsNotExist(err) {
+		if err := os.MkdirAll(basePath, fs.FileMode(0755)); err != nil {
+			log.Fatal("Unable to create parent folder: " + filepath.Dir(path))
+		}
+	}
 	f, errCreating := os.Create(path)
 	if errCreating != nil {
 		log.Fatal("Error, could not create database for path: ", path, " with: ", errCreating)

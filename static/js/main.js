@@ -349,15 +349,20 @@ class DigitalFootPrint extends Component {
             if (response.ok) {
                 return response.json()
             } else {
-                Promise.reject(response)
+                return {error: true}
             }
         }).then(data => {
-            this.showModal = false;
-            this.data.update({title: data["title"], content: data["content"]});
+            if (data["error"] === true) {
+                this.modalText = "Error while scraping the provided link";
+                this.render();
+            } else {
+                this.showModal = false;
+                this.data.update({title: data["title"], content: data["content"]});
+            }
             // window.scrollBy(0, document.body.scrollHeight);
         }).catch(ex => {
             console.log("Exception trying to fetch the article: ", ex)
-            this.modalText = "Error scraping, sorry!";
+            this.modalText = "The server encountered an error while serving the request";
             this.render();
         })
     }
