@@ -36,7 +36,7 @@ Screw finding a needle in the haystack. Let's create a new type of search to **c
 
 Apollo is a search engine and web crawler to digest **your digital footprint**. What this means is that **you choose what to put in it**. When you come across something that looks interesting, be it an article, blog post, website, whatever, you **manually add it** (with built in systems to make doing so easy). If you always want to pull in data from a certain data source, like your notes or something else, you can do that too. This tackles one of the biggest problems of recall in search engines returning a lot of irrelevant information because with Apollo, **the signal to noise ratio is very high**. You've chosen **exactly what to put in it**.
 
-Apollo is not necessarly built for raw discovery (although it certainly matches rediscovery), it's built for knowledge compression and transformation - that is looking up things that you've previously deemed to be cool
+Apollo is not necessary built for raw discovery (although it certainly matches rediscovery), it's built for knowledge compression and transformation - that is looking up things that you've previously deemed to be cool
 
 ## Design
 The first thing you might notice is that the design is reminiscent of the old digital computer age, back in the Unix days. This is intentional for many reasons. In addition to paying homage to the greats of the past, this design makes me feel like I'm searching through something that is authentically my own. When I search for stuff, I genuinely feel like I'm **travelling through the past**.
